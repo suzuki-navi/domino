@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>セルオートマトンの説明 | セルオートマトンによるCPU作成</title>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の2つ目です。(2022/12/04)</p>
+    <p>この世界のセルオートマトンのルールを説明します。</p>
+  </section>
+  <section>
+    <p>セルの色は主に灰色、紺色、赤色の3種類です。灰色と紺色は隣に伝わります。隣接するすべてのセルに伝わるのではなく、セルごとに伝わる方向が決まっています。</p>
+    <p>Stepボタンを連打してみてください。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-01", 10, 5, 1, 1, ["step"], (circuit) => {
+          circuit.xy(0, 0).line([9, 1, 9, -1, -9, 2, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1]);
+          circuit.xy(0, 0).reverse(true);
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>セルは格子状に埋め尽くされていますが、どこからも色が伝えられず、どこにも色を伝えない孤立したセルは表示されません。色を伝えるセルのみが表示されています。</p>
+    <p>Speed 1ボタンを押すと連打しなくても自動で進行します。</p>
+    <div id="cellular-automaton-03"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-03", 10, 2, 1, 1, ["stop", "step", "speed1"], (circuit) => {
+          circuit.xy(0, 0).line([9, 1, 5]);
+          circuit.xy(0, 0).reverse(true);
+          circuit.xy(0, 1).text("\nここの");
+          circuit.xy(1, 1).text("\n4マスは");
+          circuit.xy(2, 1).text("\n色が");
+          circuit.xy(3, 1).text("\n伝わらない");
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>赤色は紺色を伝えるスタート地点になります。最初のセルが赤くない場合は、どこからも色が伝わりませんので変化しません。</p>
+    <div id="cellular-automaton-04"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-04", 10, 5, 1, 1, ["stop", "step", "speed1"], (circuit) => {
+          circuit.xy(0, 0).line(9);
+          circuit.xy(0, 2).line(9);
+          circuit.xy(9, 4).line(-9);
+          circuit.xy(0, 0).reverse(true);
+          circuit.xy(9, 4).reverse(true);
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>赤色セルが経路の途中にある場合は、伝えられた色の紺色/灰色を反転させます。</p>
+    <div id="cellular-automaton-05"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-05", 10, 1, 1, 1, ["stop", "step", "speed1"], (circuit) => {
+          circuit.xy(0, 0).line(9);
+          circuit.xy(0, 0).reverse(true);
+          circuit.xy(5, 0).reverse(true);
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>環状にすることもできます。</p>
+    <p>Resetボタンを押すと初期状態に戻せます。Speed 2ボタンは1よりも速く進行します。</p>
+    <div id="cellular-automaton-06"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-06", 10, 3, 1, 2, ["reset", "stop", "step", "speed1", "speed2"], (circuit) => {
+          circuit.xy(0, 0).line([9, 2, 9, 2]);
+          circuit.xy(0, 0).reverse(true);
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>ユーザが回路に信号を伝えるためのボタンもあります。押すごとに中心のセルが赤くなったり通常のセルに戻ったりします。</p>
+    <p></p>
+    <div id="cellular-automaton-06b"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-06b", 10, 3, 1, 2, ["reset", "stop", "step", "speed1", "speed2"], (circuit) => {
+          circuit.xy(1, 1).line(8);
+          circuit.xy(1, 1).button();
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>流れを分岐や合流させることもできます。</p>
+    <p>分岐や合流ポイントは視認しやすいようにセルに灰色の枠が表示されています。</p>
+    <div id="cellular-automaton-07"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-07", 10, 8, 1, 2, ["reset", "stop", "step", "speed1", "speed2"], (circuit) => {
+          circuit.xy(1, 2).line([8]);
+          circuit.xy(5, 2).line([0, -2, 4]);
+          circuit.xy(1, 2).button();
+
+          circuit.xy(1, 4).line([4, 2]);
+          circuit.xy(1, 6).line([8]);
+          circuit.xy(1, 4).button();
+          circuit.xy(1, 6).button();
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>合流と分岐にはいくつかの制約があります。</p>
+    <p>セルごとに同時に合流は2方向まで、分岐も2方向までです。</p>
+    <p>2方向の場合は縦方向と横方向それぞれ1方向のみです。上からと左からの合流、上からの右からの合流などはできますが、左右からの合流、上下からの合流、左右への分岐、上下への分岐はできません。</p>
+    <p>この例では上と左から合流し、右と下に分岐しています。</p>
+    <div id="cellular-automaton-08"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-08", 10, 6, 1, 2, ["reset", "stop", "step", "speed1", "speed2"], (circuit) => {
+          circuit.xy(1, 1).line([4, 2]);
+          circuit.xy(1, 3).line([8]);
+          circuit.xy(5, 3).line([0, 2, -4]);
+          circuit.xy(1, 1).button();
+          circuit.xy(1, 3).button();
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>交差することもできます。交差するポイントは合流分岐と区別できるように、濃い灰色で小さめの正方形で表示されます。</p>
+    <div id="cellular-automaton-09"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI("cellular-automaton-09", 10, 6, 1, 2, ["stop", "step", "speed1", "speed2"], (circuit) => {
+          circuit.xy(1, 1).line([4, 4, -4]);
+          circuit.xy(1, 3).line([8]);
+          circuit.xy(1, 1).button();
+          circuit.xy(1, 3).button();
+        });
+      });
+    </script>
+  </section>
+</body>
+</html>
