@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>セルオートマトンの規則 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="セルオートマトンの説明"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/rule.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/rule_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>セルオートマトンの規則</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の3つ目です。(2022/12/05)</p>
+    <p><a href="cell.html">前回</a>はセルオートマトンを実際に動く様子をお見せしながら概要を説明しましたが、今回はセルオートマトンの厳密な規則を説明します。</p>
+  </section>
+  <section>
+    <p>セルは5種類あります。どのセルもいずれか1つに該当します。</p>
+    <ul>
+      <li>通常セル</li>
+      <li>反転セル</li>
+      <li>交差セル</li>
+      <li>遅延セル</li>
+      <li>ボタンセル</li>
+    </ul>
+    <p>セルには次の属性があります。</p>
+    <ul>
+      <li>5種類のいずれに該当するか</li>
+      <li>入力元（上、右、下、左のいずれか0個から2個）</li>
+      <li>出力先（上、右、下、左のいずれか0個から2個）</li>
+    </ul>
+    <p>属性には次の制約があります。</p>
+    <ul>
+      <li>上、右、下、左の4方向は、入力元となるか出力先となるかどちらでもないかの3通り。同一方向が入力元かつ出力先とはならない</li>
+      <li>入力元が2個の場合は反対方向の2個にはできず、必ず90度の方向角をなす。左右からの入力、上下からの入力ができない</li>
+      <li>出力先も同様に2個の場合は反対方向の2個にはできず、必ず90度の方向角をなす。左右への出力、上下への出力ができない</li>
+      <li>交差セルでは入力元が必ず2個、出力先が必ず2個</li>
+    </ul>
+    <p>入力出力の向きは下の例のようにセルとセルの間のグラデーションで示しています。矢印はここでの説明のために書き加えたものです。</p>
+    <div id="cellular-automaton-intro"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-intro",
+          initialScale: 1,
+          initialSpeed: 1,
+          uiControls: [
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 1).line([4]);
+            circuit.xy(1, 0).line([0, 1]);
+            circuit.xy(1, 1).line([0, 1]);
+            circuit.xy(3, 2).line([0, -1]);
+            circuit.xy(3, 1).line([0, -1]);
+            circuit.xy(1, 0).text("↓");
+            circuit.xy(1, 2).text("↓");
+            circuit.xy(3, 0).text("↑");
+            circuit.xy(3, 2).text("↑");
+            circuit.xy(0, 1).text("→");
+            circuit.xy(2, 1).text("→");
+            circuit.xy(4, 1).text("→");
+          }
+        });
+      });
+    </script>
+    <h2>状態と遷移規則</h2>
+    <p>5種類のセルごとに、状態と遷移規則を説明します。</p>
+    <h3>通常セル</h3>
+    <p>通常セルの状態は次のいずれかです。</p>
+    <ul>
+      <li>Off</li>
+      <li>On</li>
+    </ul>
+    <p>通常セルの状態遷移する規則は次の通りです。</p>
+    <ul>
+      <li>入力元の方向にあるセルのうちOnになっているものがひとつでもあればOn、なければOff</li>
+    </ul>
+    <p>入力元がない1つもないセルでは常にOffになります。</p>
+    <p>ブラウザ上では、Onの場合に紺色、Offの場合に灰色、ただし入力元も出力先も1つもないセルは非表示としています。入力元が2つまたは出力先が2つの場合は視認しやすいよう、灰色の枠も表示します。</p>
+    <p>下の例の右下のセルは、入力元が2つあり、出力先がありません。</p>
+    <div id="cellular-automaton-normal-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-normal-01",
+          initialScale: 1,
+          initialSpeed: 1,
+          uiControls: [
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([1, 1]);
+            circuit.xy(0, 1).line([1]);
+            circuit.xy(0, 1).value(true);
+            circuit.xy(1, 1).value(true);
+          }
+        });
+      });
+    </script>
+    <h3>反転セル</h3>
+    <p>反転セルの状態は次のいずれかです。
+    <ul>
+      <li>Off</li>
+      <li>On</li>
+    </ul>
+    <p>反転セルの状態遷移する規則は次の通りです。</p>
+    <ul>
+      <li>入力元の方向にあるセルのうちOnになっているものがひとつでもあればOff、なければOn</li>
+    </ul>
+    <p>入力元がない1つもないセルでは常にOnになります。通常セルとは状態が反転します。</p>
+    <p>ブラウザ上では、反転セルは状態によらず赤色で表示しています。通常セルと同様に、入力元が2つまたは出力先が2つの場合は視認しやすいよう、灰色の枠も表示します。</p>
+    <div id="cellular-automaton-reverse-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-reverse-01",
+          initialScale: 1,
+          initialSpeed: 1,
+          uiControls: [
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([2]);
+            circuit.xy(0, 1).line([2]);
+            circuit.xy(0, 0).value(true);
+            circuit.xy(1, 0).reverse();
+            circuit.xy(1, 1).reverse(true);
+            circuit.xy(2, 1).value(true);
+
+            circuit.xy(5, 0).line([0, 1]);
+            circuit.xy(4, 1).line([2]);
+            circuit.xy(5, 1).reverse(true);
+            circuit.xy(6, 1).value(true);
+          }
+        });
+      });
+    </script>
+    <h3>交差セル</h3>
+    <p>交差セルの状態は次のいずれかです。
+    <ul>
+      <li>横方向・縦方向ともOff</li>
+      <li>横方向がOff、縦方向がOn</li>
+      <li>横方向がOn、縦方向がOff</li>
+      <li>横方向・縦方向ともOn</li>
+    </ul>
+    <p>交差セルの状態遷移する規則は次の通りです。</p>
+    <ul>
+      <li>上または下方向の入力元セルがOnであれば縦方向はOn、そうでなければ縦方向はOff</li>
+      <li>左または右方向の入力元セルがOnであれば横方向はOn、そうでなければ横方向はOff</li>
+    </ul>
+    <p>交差セルは、縦方向と横方向とで別々に通常セルの規則を適用するものです。</p>
+    <p>ブラウザ上では、交差セルは状態によらず濃い灰色でやや小さい正方形で表示しています。</p>
+    <div id="cellular-automaton-cross-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-cross-01",
+          initialScale: 1,
+          initialSpeed: 1,
+          uiControls: [
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 1).line([2]);
+            circuit.xy(1, 0).line([0, 2]);
+            circuit.xy(1, 0).value(true);
+            circuit.xy(1, 1).valueV(true);
+            circuit.xy(1, 2).value(true);
+          }
+        });
+      });
+    </script>
+    <h3>遅延セル</h3>
+    <p>遅延セルの状態は次のいずれかです。
+    <ul>
+      <li>Off</li>
+      <li>中間状態</li>
+      <li>On</li>
+    </ul>
+    <p>遅延セルの状態遷移する規則は次の通りです。</p>
+    <ul>
+      <li>入力元の方向にあるセルのうちOnになっているものがひとつでもあればOn</li>
+      <li>入力元の方向にあるセルのうちOnになっているものがなく、現在の状態がOnであれば、次の状態は中間状態</li>
+      <li>入力元の方向にあるセルのうちOnになっているものがなく、現在の状態が中間状態またはOffであれば、次の状態はOff</li>
+    </ul>
+    <p>中間状態は他のセルから見たらOn状態と同じになります。出力先セルから見ると、入力元となる遅延セルが中間状態の場合はOn状態だとみなして、状態遷移規則が適用されます。要するに遅延セルとは、OnからOffになるのが通常セルに比べて1ステップ遅れるセルです。</p>
+    <p>ブラウザ上では、遅延セルは灰色の枠を表示します。そして、通常セルと同様に状態に応じて紺色または灰色で表示します。中間状態はOn状態に準じた表示になります。従って、見た目は入力元が2つまたは出力先が2つの場合の通常セルと同じです。</p>
+    <div id="cellular-automaton-delay-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-delay-01",
+          initialScale: 1,
+          initialSpeed: 1,
+          uiControls: [
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([2]);
+            circuit.xy(1, 0).sofa();
+          }
+        });
+      });
+    </script>
+    <h3>ボタンセル</h3>
+    <p>ボタンセルの状態は次のいずれかです。</p>
+    <ul>
+      <li>Off</li>
+      <li>On</li>
+      <li>反転On</li>
+    </ul>
+    <p>ボタンセルの状態遷移する規則は次の通りです。
+    <ul>
+      <li>入力元の方向にあるセルのうちOnになっているものがひとつでもあればOn</li>
+      <li>入力元の方向にあるセルのうちOnになっているものがなく、現在の状態が反転Onであれば、次の状態は反転On</li>
+      <li>入力元の方向にあるセルのうちOnになっているものがなく、現在の状態がOnまたはOffであれば、次の状態はOff</li>
+    </ul>
+    <p>反転Onは他のセルから見たらOn状態と同じになります。出力先セルから見ると、入力元となるボタンセルが反転On状態の場合はOn状態だとみなして、状態遷移規則が適用されます。</p>
+    <p>ボタンはブラウザ上でマウスクリックにも反応します。クリックされると、現在の状態がOffのときは反転Onに、OnのときはOnのまま、反転OnのときはOffに状態遷移します。</p>
+    <p>ブラウザ上では、反転Onの状態では反転セルと同様に赤色で表示します。それ以外の状態では通常セルと同様に状態に応じて紺色または灰色で表示します。それに加えボタン状の大きめの四角形をかぶせて表示します。</p>
+    <p>下の例では実際にボタンをクリックすることができます。</p>
+    <div id="cellular-automaton-button-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-button-01",
+          worldWidth: 3,
+          worldHeight: 3,
+          initialScale: 1,
+          initialSpeed: 1,
+          uiControls: [
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 1).line([2]);
+            circuit.xy(1, 1).button();
+            circuit.xy(4, 1).line([2]);
+            circuit.xy(4, 1).reverse(true);
+            circuit.xy(5, 1).value(true);
+            circuit.xy(6, 1).value(true);
+            circuit.xy(5, 1).button();
+          }
+        });
+      });
+    </script>
+    <h2>まとめ</h2>
+    <p>ライフゲームやワイヤワールドに比べると複雑なルールです。その分、実際の物理CPUの設計に少し近くなるはずです。</p>
+  </section>
+</body>
+</html>

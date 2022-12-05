@@ -20,6 +20,14 @@ circuitModules.push((Circuit) => {
     this.expand({x:0, y:0});
     this.setValue({x:0, y:0}, value);
   }
+  Circuit.prototype.valueH = function (value) {
+    this.expand({x:0, y:0});
+    this.setValueH({x:0, y:0}, value);
+  }
+  Circuit.prototype.valueV = function (value) {
+    this.expand({x:0, y:0});
+    this.setValueV({x:0, y:0}, value);
+  }
   Circuit.prototype.sofa = function (value) {
     this.expand({x:0, y:0});
     this.setSofa({x:0, y:0}, value);

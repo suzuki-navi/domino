@@ -308,6 +308,30 @@ function cellularAutomatonUI2({
       this.enqueueExecution(node);
       this.enqueueDirty(node);
     }
+    setValueH(x, y, value) {
+      if (x < 0 || x >= this.colCount) throw "Illegal Position";
+      if (y < 0 || y >= this.lineCount) throw "Illegal Position";
+      const idx = y * this.colCount + x;
+      const node = this.nodes[idx];
+      if (!node.cross) throw "Illegal Position";
+      node.statusH = value;
+      node.statusH2 = value;
+      node.infos.push(new Error("Cell Info Value:").stack);
+      this.enqueueExecution(node);
+      this.enqueueDirty(node);
+    }
+    setValueV(x, y, value) {
+      if (x < 0 || x >= this.colCount) throw "Illegal Position";
+      if (y < 0 || y >= this.lineCount) throw "Illegal Position";
+      const idx = y * this.colCount + x;
+      const node = this.nodes[idx];
+      if (!node.cross) throw "Illegal Position";
+      node.statusV = value;
+      node.statusV2 = value;
+      node.infos.push(new Error("Cell Info Value:").stack);
+      this.enqueueExecution(node);
+      this.enqueueDirty(node);
+    }
 
     setButton(x, y, size) {
       if (x < 0 || x >= this.colCount) throw "Illegal Position";
@@ -837,6 +861,7 @@ function cellularAutomatonUI2({
       for (const info of node.infos) {
         console.log(info);
       }
+      console.log(node);
     }
   }
 
@@ -980,6 +1005,16 @@ function cellularAutomatonUI2({
       const m = this.worldModel;
       const {x, y} = this._convertToRaw(xy);
       m.setValue(x + m.baseX, y + m.baseY, value);
+    }
+    setValueH(xy, value) {
+      const m = this.worldModel;
+      const {x, y} = this._convertToRaw(xy);
+      m.setValueH(x + m.baseX, y + m.baseY, value);
+    }
+    setValueV(xy, value) {
+      const m = this.worldModel;
+      const {x, y} = this._convertToRaw(xy);
+      m.setValueV(x + m.baseX, y + m.baseY, value);
     }
 
     setSofa(xy) {
