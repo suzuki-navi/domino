@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>AND回路・OR回路・NOT回路 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="AND回路・OR回路・NOT回路"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/logic.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/logic_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>AND回路・OR回路・NOT回路</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の4つ目です。(2022/12/08)</p>
+    <p>今回は、セルオートマトンで基本的な論理回路であるAND回路・OR回路・NOT回路を組み立てます。</p>
+    <p>セルがOn状態（紺色表示）を1、Off状態（灰色表示）を0とします。</p>
+    <h2>OR回路</h2>
+    <p>最初はOR回路です。</p>
+    <p>OR回路は複数の入力の中で1つでもOn状態(1)であれば出力もOn(1)になる回路です。すべての入力がOff(0)の時に限り出力がOff(0)になります。</p>
+    <p>このセルオートマトンでは単に合流させればORになります。</p>
+    <table>
+      <tr><th>入力1</th><th>入力2</th><th>出力</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td></tr>
+      <tr><td>1</td><td>0</td><td>1</td></tr>
+      <tr><td>1</td><td>1</td><td>1</td></tr>
+    </table>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 10,
+          worldHeight: 5,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([4, 2]);
+            circuit.xy(1, 3).line([8]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 3).button();
+          }
+        });
+      });
+    </script>
+    <h2>NOT回路</h2>
+    <p>次はNOT回路です。OnとOffを反転させる回路です。</p>
+    <p>このセルオートマトンでは赤いセルがそのままNOTになります。</p>
+    <table>
+      <tr><th>入力</th><th>出力</th></tr>
+      <tr><td>0</td><td>1</td></tr>
+      <tr><td>1</td><td>0</td></tr>
+    </table>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          worldWidth: 10,
+          worldHeight: 3,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([8]);
+            circuit.xy(1, 1).button();
+            circuit.xy(5, 1).reverse();
+            for (let i = 5; i < 10; i++) {
+              circuit.xy(i, 1).value(true);
+            }
+          }
+        });
+      });
+    </script>
+    <h2>NOR回路</h2>
+    <p>これらを組み合わせたNOR(OR+NOT)回路です。OR回路の出力にNOT回路を接続します。入力が1つでもOnであれば出力はOffになり、入力がすべてOffのときに限り出力はOnになります。</p>
+    <table>
+      <tr><th>入力1</th><th>入力2</th><th>出力</th></tr>
+      <tr><td>0</td><td>0</td><td>1</td></tr>
+      <tr><td>0</td><td>1</td><td>0</td></tr>
+      <tr><td>1</td><td>0</td><td>0</td></tr>
+      <tr><td>1</td><td>1</td><td>0</td></tr>
+    </table>
+    <div id="cellular-automaton-03"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-03",
+          worldWidth: 10,
+          worldHeight: 5,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([4, 2]);
+            circuit.xy(1, 3).line([8]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 3).button();
+            circuit.xy(6, 3).reverse();
+            for (let i = 6; i < 10; i++) {
+              circuit.xy(i, 3).value(true);
+            }
+          }
+        });
+      });
+    </script>
+    <h2>AND回路</h2>
+    <p>さらに入力側にもNOT回路を接続します。入力が1つでもOffであれば出力はOffになり、入力がすべてOnのときに限り出力はOnになります。</p>
+    <p>つまりこれはAND回路になります。</p>
+    <table>
+      <tr><th>入力1</th><th>入力2</th><th>出力</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>0</td><td>1</td><td>0</td></tr>
+      <tr><td>1</td><td>0</td><td>0</td></tr>
+      <tr><td>1</td><td>1</td><td>1</td></tr>
+    </table>
+    <div id="cellular-automaton-04"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-04",
+          worldWidth: 10,
+          worldHeight: 5,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([4, 2]);
+            circuit.xy(1, 3).line([8]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 3).button();
+            circuit.xy(4, 1).reverse(true);
+            circuit.xy(4, 3).reverse(true);
+            circuit.xy(6, 3).reverse();
+            circuit.xy(5, 1).value(true);
+            circuit.xy(5, 2).value(true);
+            circuit.xy(5, 3).value(true);
+          }
+        });
+      });
+    </script>
+    <p>AND回路は赤いセルを寄せることでコンパクトにできます。</p>
+    <div id="cellular-automaton-05"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-05",
+          worldWidth: 10,
+          worldHeight: 5,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([4, 2]);
+            circuit.xy(1, 3).line([8]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 3).button();
+            circuit.xy(5, 2).reverse(true);
+            circuit.xy(4, 3).reverse(true);
+            circuit.xy(5, 3).reverse();
+          }
+        });
+      });
+    </script>
+    <h2>NAND回路</h2>
+    <p>AND回路にある出力のNOTを削除するとNAND回路になります。</p>
+    <table>
+      <tr><th>入力1</th><th>入力2</th><th>出力</th></tr>
+      <tr><td>0</td><td>0</td><td>1</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td></tr>
+      <tr><td>1</td><td>0</td><td>1</td></tr>
+      <tr><td>1</td><td>1</td><td>0</td></tr>
+    </table>
+    <div id="cellular-automaton-06"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-06",
+          worldWidth: 10,
+          worldHeight: 5,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([4, 2]);
+            circuit.xy(1, 3).line([8]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 3).button();
+            circuit.xy(5, 2).reverse(true);
+            circuit.xy(4, 3).reverse(true);
+            circuit.xy(5, 3).value(true);
+            circuit.xy(6, 3).value(true);
+            circuit.xy(7, 3).value(true);
+            circuit.xy(8, 3).value(true);
+            circuit.xy(9, 3).value(true);
+          }
+        });
+      });
+    </script>
+    <p>AND回路、OR回路、NOT回路、NAND回路、NOR回路がそろいました。これで任意の論理演算ができるようになるはずです。</p>
+  </section>
+</body>
+</html>
