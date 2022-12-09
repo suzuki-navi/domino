@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>加算器 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="加算器"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/adder.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/adder_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../alu.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>加算器</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の5つ目です。(2022/12/09)</p>
+    <p>今回は、AND回路・OR回路・NOT回路を組み合わせて加算器を作成します。</p>
+    <p>加算器は2進数の数同士を加算する論理回路です。</p>
+    <script>
+      circuitModules.push((Circuit) => {
+        Circuit.prototype.halfAdderDemo1 = function () {
+          const circuit = this;
+          circuit.xy(0, 0).line([9]);
+          circuit.xy(0, 5).line([7, -5]);
+          circuit.xy(2, 5).line([0, -2, 2, -3]);
+          circuit.xy(2, 0).line([0, 2, -3, 3]);
+          circuit.xy(5, 5).line([0, 2]);
+          circuit.xy(4, 5).reverse();
+          circuit.xy(5, 5).reverse();
+          circuit.xy(5, 4).reverse();
+          circuit.xy(6, 0).reverse();
+          circuit.xy(7, 0).reverse();
+          circuit.xy(7, 1).reverse();
+          circuit.xy(7, 3).reverse();
+
+          circuit.xy(0, 0).text("Input 1");
+          circuit.xy(0, 5).text("Input 2");
+          circuit.xy(9, 0).text("Sum");
+          circuit.xy(5, 7).text("Carry");
+
+          circuit.xy(4, 0).text("OR");
+          circuit.xy(7, 0).text("AND");
+          circuit.xy(7, 3).text("NOT");
+          circuit.xy(5, 5).text("AND");
+
+          circuit.xy(1, 0).text("→");
+          circuit.xy(1, 5).text("→");
+          circuit.xy(3, 5).text("→");
+          circuit.xy(8, 0).text("→");
+          circuit.xy(2, 1).text("↓");
+          circuit.xy(2, 4).text("↑");
+          circuit.xy(5, 6).text("↓");
+          circuit.xy(6, 5).text("→");
+        }
+        Circuit.prototype.fullAdderDemo1 = function () {
+          const circuit = this;
+          circuit.xy(11, -2).line([0, 7, -2]);
+          circuit.xy(11, -2).text("Input Carry");
+          circuit.xy( 0,  0).halfAdderDemo1();
+          circuit.xy( 9,  0).line([4]);
+          circuit.xy(13,  0).halfAdderDemo1();
+          circuit.xy(18,  7).line([0, 1, 7, -3]);
+          circuit.xy( 5,  7).line([0, 2, -6]);
+          circuit.xy(11, 11).text("Output Carry");
+
+          circuit.xy(11, -1).text("↓");
+          circuit.xy(11, 10).text("↓");
+        }
+        Circuit.prototype.adderChip = function (bitCount) {
+          const circuit = this;
+          const gridHeight = 3;
+          circuit.halfAdder1a();
+          circuit.xy(4, 2).line([4]);
+          circuit.xy(3, 2).line([0, 1, -3]);
+          for (let i = 1; i < bitCount; i++) {
+            circuit.xy(0, gridHeight * i).fullAdder1();
+          }
+        }
+      });
+    </script>
+    <h2>半加算器</h2>
+    <p>1桁の2進数同士の加算をする回路を半加算器といいます。入力は2つです。出力は加算結果と桁上がりフラグの2つです。</p>
+    <p>1桁の2進数同士の加算は次の4通りあります。</p>
+    <ul>
+      <li>0 + 0 = 0</li>
+      <li>0 + 1 = 1</li>
+      <li>1 + 0 = 1</li>
+      <li>1 + 1 = 10 (10進数でいう2は2進数でいう10)</li>
+    </ul>
+    <p>1 + 1 に限って2進数では1桁では足りず、上の桁に繰り上がりをします。</p>
+    <p>これを論理式で表現すると次のようになります。</p>
+    <ul>
+      <li>加算結果 = (入力1 OR 入力2) AND NOT (入力1 AND 入力2)</li>
+      <li>桁上がり出力 = 入力1 AND 入力2</li>
+    </ul>
+    <p>「NOT (入力1 AND 入力2)」の部分は「入力1 AND 入力2」の出力を反転するもので、NANDの意味です。</p>
+    <p>真理値表にすると次の通りです。</p>
+    <table>
+      <tr><th>入力1</th><th>入力2</th><th>(入力1 OR 入力2)</th><th>NOT (入力1 AND 入力2)</th><th>加算結果</th><th>桁上がり出力</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+      <tr><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+      <tr><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+    </table>
+    <p>この論理式をそのまま回路にしたのが下です。ボタンを押して試してみてください。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 13,
+          worldHeight: 9,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(3, 1).halfAdderDemo1();
+            circuit.xy(1, 1).line([2]);
+            circuit.xy(1, 6).line([2]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 6).button();
+          }
+        });
+      });
+    </script>
+    <h2>全加算器</h2>
+    <p>入力が3つになったものを全加算器といいます。複数桁を計算する際の上位桁では下位からの桁上がりを受け取るために全加算器が必要になります。</p>
+    <p>全加算器は半加算器を2つ並べることで実現できます。</p>
+    <p>この例では、1つ目の半加算器の加算結果と桁上がり入力を加算するのが2つ目の半加算器です。2つの半加算器の桁上がり出力のいずれかが1であれば、全加算器自体の桁上がり出力を1とします。つまり2つの桁上がり出力をOR回路で接続したのが、全体の桁上がり出力となります。2つの半加算器が2つとも同時に桁上がり出力をすることはありません。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          worldWidth: 26,
+          worldHeight: 16,
+          initialScale: 3,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(3, 4).fullAdderDemo1();
+            circuit.xy(1, 1).line([13, 1]);
+            circuit.xy(1, 4).line([2]);
+            circuit.xy(1, 9).line([2]);
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 4).button();
+            circuit.xy(1, 9).button();
+          }
+        });
+      });
+    </script>
+    <h2>複数桁の加算</h2>
+    <p>加算器を3つ並べ、3桁同士の加算をできるようにしました。最下位の桁（この回路上では上に位置している）は半加算器で、上2桁（この回路上では真ん中と下に位置している）は全加算器です。</p>
+    <div id="cellular-automaton-03"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-03",
+          worldWidth: 29,
+          worldHeight: 39,
+          initialScale: 3,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 6,  1).halfAdderDemo1();
+            circuit.xy(11,  8).line([0, 1, -6, 1]);
+            circuit.xy( 6, 12).fullAdderDemo1();
+            circuit.xy(17, 23).line([0, 2]);
+            circuit.xy( 6, 27).fullAdderDemo1();
+
+            circuit.xy( 1,  1).line([5]);
+            circuit.xy( 1,  3).line([4, 9, -1]);
+            circuit.xy( 1,  5).line([3, 22, -2]);
+            circuit.xy( 1, 28).line([2, -22, 3]);
+            circuit.xy( 1, 30).line([4, -13, 1]);
+            circuit.xy( 1, 32).line([5]);
+            circuit.xy(15,  1).line([13]);
+
+            circuit.xy( 1,  1).button();
+            circuit.xy( 1,  3).button();
+            circuit.xy( 1,  5).button();
+            circuit.xy( 1, 28).button();
+            circuit.xy( 1, 30).button();
+            circuit.xy( 1, 32).button();
+
+            circuit.xy( 1,  0).text("入力1");
+            circuit.xy( 1, 27).text("入力2");
+          }
+        });
+      });
+    </script>
+    <h2>省スペース化</h2>
+    <p>加算器は桁上がりがありますので、下の桁から順番に計算していくことになります。1桁の加算は単純な計算ですが、64ビットのCPUですと、64桁を順番に計算することになり、時間のかかる処理になってしまいます。そのため実際の半導体を使った加算器では、桁上げ先見回路、桁上げ選択回路など高速化の工夫をします。</p>
+    <p>しかし、このセルオートマトンの世界ではそのような工夫はほとんど無駄です。このセルオートマトンの世界では、ANDやORなどの素子を通過する時間がゼロだからです。本当はゼロではなく信号が伝達するのに時間がかかりますが、これは素子ではないただの伝達線でも同じだけの時間がかかるため、素子による遅延がゼロという意味です。このセルオートマトンの世界での信号が伝わる速度は、現実世界でいう光の速度に相当します。すべての素子を光の速度で通過して演算できてしまうため、このセルオートマトンでのCPUを高速化をするには、回り道をしている伝達線を直線にしたり、回路を小さくするほかありません。</p>
+    <p>これまでの加算回路も隙間が大きく広い面積が必要でしたので、隙間を詰めて省スペースにしました。次の例は省スペースの加算器で4桁同士の加算をします。</p>
+    <p>右にあるのが全加算器1つ分です。積み重ねてもコンパクトにまとまるように、横長の形状です。しかも上下に並べたときに形がぴったり合います。</p>
+    <div id="cellular-automaton-04"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-04",
+          worldWidth: 38,
+          worldHeight: 13,
+          initialScale: 3,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(9, 0).adderChip(4);
+
+            for (let i = 0; i < 4; i++) {
+              circuit.xy(1, 1+3*i).button();
+              circuit.xy(5, 1+3*i).button();
+              circuit.xy(1, 1+3*i).line([2, -1, 7]);
+              circuit.xy(5, 1+3*i).line([1, 1, -3]);
+            }
+
+            circuit.xy(17,  2).line([5]);
+            circuit.xy(17,  5).line([5]);
+            circuit.xy(17,  8).line([5]);
+            circuit.xy(17, 11).line([5]);
+
+            circuit.xy(27,  5).fullAdder1();
+          }
+        });
+      });
+    </script>
+    <p>最後の例は、横長ではなく正方形に近い形状の全加算器です。</p>
+    <p>このあとのCPUの設計でわかってくることですが、8ビット加算回路は全加算器を縦に積み重ねるので縦幅を圧縮したいのに対して、8ビット乗算回路では正方形に近い全加算器を必要とします。</p>
+    <div id="cellular-automaton-05"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-05",
+          worldWidth: 13,
+          worldHeight: 15,
+          initialScale: 3,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 4,  4).fullAdder2();
+            circuit.xy( 6,  1).line([0, 3]);
+            circuit.xy( 1,  5).line([3]);
+            circuit.xy( 1,  9).line([3]);
+            circuit.xy( 8,  8).line([4]);
+            circuit.xy( 6, 10).line([0, 4]);
+
+            circuit.xy( 6,  1).button();
+            circuit.xy( 1,  5).button();
+            circuit.xy( 1,  9).button();
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>
