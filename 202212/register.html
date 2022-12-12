@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>自己保持回路 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="自己保持回路"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/register.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/register_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>自己保持回路</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の6つ目です。(2022/12/12)</p>
+    <p>これまで論理回路の組み合わせをしてきましたが、次は順序回路です。</p>
+    <p>自己保持回路とはOn/Off状態を自分で保持し続ける回路です。入力が途切れてもそれまでの入力の状態を保持します。</p>
+    <p>半導体の世界ではフリップフロップもしくはラッチ回路と類似しています。CPUの中ではレジスタなどで利用されます。8ビット単位で処理するCPUでは8個セットになった自己保持回路をレジスタとして多く利用します。また状態を保持するための1個だけの自己保持回路も多く利用します。</p>
+    <p>このサンプル回路の下半分が自己保持回路です。上半分はクロックを自己保持回路に定期的に流すためのループです。</p>
+    <p>クロックが自己保持回路に流れるごとに自己保持回路のOn/Offが反転します。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 20,
+          worldHeight: 8,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([19, 1, 18, -6, 1, 7]);
+            circuit.xy( 0,  0).reverse();
+            circuit.xy(10,  0).reverse();
+
+            circuit.xy( 9,  1).line([0, 3]);
+            circuit.xy( 8,  5).register();
+            circuit.xy( 8,  7).line([-1, 2]);
+            circuit.xy( 7,  5).reverse();
+          }
+        });
+      });
+    </script>
+    <p>次の例では、自己保持回路に入力が2つあります。上からの入力がクロックです。クロックが来るとOn/Offが反転するのではなくその時に左から来ていた入力で上書きされます。クロックが来ていないときは左からの入力が無視されています。</p>
+    <p>クロックが来てないときは自己保持回路内で状態がループしています。クロックが来るとループが切られ、左からの入力が中に流れ込みます。クロックが来ていないときは左からの入力が無視されています。</p>
+    <p>半導体によるCPUでも出力を入力に戻すことで自己保持回路ができる理屈は同じです。</p>
+    <p>この回路1つで1ビットの情報を保持できます。8ビット整数を保存するレジスタはこれを8個並べることになります。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          worldWidth: 20,
+          worldHeight: 8,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([19, 1, 18, -6, 1, 7]);
+            circuit.xy( 0,  0).reverse();
+            circuit.xy(10,  0).reverse();
+
+            circuit.xy(13,  1).line([0, 3]);
+            circuit.xy(12,  5).register();
+            circuit.xy( 6,  5).line([5]);
+            circuit.xy( 6,  5).button();
+          }
+        });
+      });
+    </script>
+  </section>
+</body>
+</html>
