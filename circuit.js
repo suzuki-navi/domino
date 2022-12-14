@@ -101,5 +101,59 @@ circuitModules.push((Circuit) => {
     }
     circuit.sub({x: 4, y: -1}).line([0, gridHeight * (bitCount-1)]);
   }
+
+  Circuit.prototype.counter = function (bitCount) {
+    const circuit = this;
+    const gridHeight = 4;
+    for (let i = 0; i < bitCount; i++) {
+      const cir = circuit.xy(0, i * gridHeight);
+      cir.xy(-4, -1).line([3]);
+      cir.xy(0, 0).flip().register();
+      cir.xy(0, 2).line([1, -2]);
+        cir.xy(1, 0).reverse();
+      if (i > 0) {
+        cir.xy(-4, -5).line([0, 4]);
+        cir.xy(-3, -3).line([-2, -1, -1]);
+        cir.xy(-5, -2).reverse(true);
+        cir.xy(-4, -4).reverse();
+        cir.xy(-4, -2).reverse();
+      }
+    }
+  }
+
+  Circuit.prototype.counterTen = function (bitCount) {
+    const circuit = this;
+    circuit.counter(4);
+    circuit.xy(-3, 12).line([-4, 9, 3]);
+    circuit.xy(-4, 2).reverse(true);
+    circuit.xy(-4, 3).reverse();
+
+    circuit.xy(-4, 0).line([-2, -11, -2]);
+    circuit.xy(-5, 1).line([-2, 2, 1, 1]);
+    circuit.xy(-7, 3).line([0, -1, 1]);
+    circuit.xy(-5, 1).reverse(true);
+    circuit.xy(-5, 2).reverse();
+    circuit.xy(-7, 2).reverse(true);
+    circuit.xy(-6, 2).reverse();
+  }
+
+
+  Circuit.prototype.counterSix = function (bitCount) {
+    const circuit = this;
+    circuit.counter(3);
+
+    circuit.xy(-3, 8).line([-4, 5, 3]);
+    circuit.xy(-4, 2).reverse(true);
+    circuit.xy(-4, 3).reverse();
+
+    circuit.xy(-4, 0).line([-2, -7, -2]);
+    circuit.xy(-5, 1).line([-2, 2, 1, 1]);
+    circuit.xy(-7, 3).line([0, -1, 1]);
+    circuit.xy(-5, 1).reverse(true);
+    circuit.xy(-5, 2).reverse();
+    circuit.xy(-7, 2).reverse(true);
+    circuit.xy(-6, 2).reverse();
+  }
+
 });
 

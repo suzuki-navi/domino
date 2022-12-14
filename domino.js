@@ -883,7 +883,7 @@ function cellularAutomatonUI2({
       this.offsetX = 0;
       this.offsetY = 0;
       this.offsetDirection = 0;
-      this.flip = false;
+      this.flipFlag = false;
     }
 
     xy(x, y) {
@@ -899,25 +899,25 @@ function cellularAutomatonUI2({
     sub(xy, direction = 0, flip = false) {
       const {x, y} = this._convertToRaw(xy);
 
-      if (!this.flip && !flip) {
+      if (!this.flipFlag && !flip) {
         direction = (this.offsetDirection + direction) % 4;
         if (direction < 0) {
           direction += 4;
         }
         flip = false;
-      } else if (!this.flip && flip) {
+      } else if (!this.flipFlag && flip) {
         direction = -(this.offsetDirection + direction) % 4;
         if (direction < 0) {
           direction += 4;
         }
         flip = true;
-      } else if (this.flip && !flip) {
+      } else if (this.flipFlag && !flip) {
         direction = (this.offsetDirection + direction) % 4;
         if (direction < 0) {
           direction += 4;
         }
         flip = true;
-      } else if (this.flip && flip) {
+      } else if (this.flipFlag && flip) {
         direction = -(this.offsetDirection + direction) % 4;
         if (direction < 0) {
           direction += 4;
@@ -929,13 +929,13 @@ function cellularAutomatonUI2({
       ret.offsetX = x;
       ret.offsetY = y;
       ret.offsetDirection = direction;
-      ret.flip = flip;
+      ret.flipFlag = flip;
 
       return ret;
     }
 
     _convertToRaw({x, y}) {
-      if (this.flip) {
+      if (this.flipFlag) {
         if (this.offsetDirection == 0) {
           return {x: this.offsetX - x, y: this.offsetY + y};
         } else if (this.offsetDirection == 1) {
@@ -1031,7 +1031,7 @@ function cellularAutomatonUI2({
         direction += 4;
       }
       if (direction == 0) {
-        if (this.flip) {
+        if (this.flipFlag) {
           m.drawLeft(x + m.baseX, y + m.baseY);
         } else {
           m.drawRight(x + m.baseX, y + m.baseY);
@@ -1039,7 +1039,7 @@ function cellularAutomatonUI2({
       } else if (direction == 1) {
         m.drawLower(x + m.baseX, y + m.baseY);
       } else if (direction == 2) {
-        if (this.flip) {
+        if (this.flipFlag) {
           m.drawRight(x + m.baseX, y + m.baseY);
         } else {
           m.drawLeft(x + m.baseX, y + m.baseY);

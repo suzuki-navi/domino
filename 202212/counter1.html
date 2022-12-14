@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>カウンタ | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="カウンタ"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/counter1.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/counter1_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>カウンタ</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の7つ目です。(2022/12/14)</p>
+    <p>自己保持回路ではクロックが来るごとに状態が反転することができました。これを複数並べれば2進数によるカウンタを作れます。</p>
+    <p>1つ目の自己保持回路がクロックを受け取り、01状態が反転します。2つ目の自己保持回路は1つ目の自己保持回路が1から0に戻るときにクロックを受け取ることで、2進数での2の位を表現します。3つ目は同様に、2つ目が1から0に戻るときにクロックを受け取ることで2進数の4の位を表現します。4つ目も同じく、3つ目が1から0に戻るときにクロックを受け取ることで2進数の8の位を表現します。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 15,
+          worldHeight: 20,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([14, 1, 13, -14, 1, 15]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy(7, 1).line([0, 3]);
+            circuit.xy(11, 5).counter(4);
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>このカウンタはCPUの中ではプログラムカウンタで利用します。プログラムカウンタは実行中の命令番地を表します。クロックが来るごとに次の命令を実行するためにカウンタを1つ進めます。CPUはプログラムカウンタが指しているメモリ番地の値をメモリから読み取って、命令を実行します。</p>
+    <p>このカウンタをそのままプログラムカウンタとして利用するには機能が足りません。CPUはループや条件分岐のためにジャンプすることがあります。ジャンプするときにはプログラムカウンタを任意の値に書き換えることが必要です。また、命令の長さが命令によって異なる命令セットの場合は、1ずつ増やすとは限りません。この辺はあとで考えることにします。</p>
+  </section>
+  <section>
+    <p>次は応用です。2の位へのクロックは8の位が0のときに限るようにします。また、8の位が1のときは1の位が1から0に戻るときにもクロックを追加で受け取るようにしています。これにより9の次が0に戻る、サイクル10のカウンタになります。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          worldWidth: 15,
+          worldHeight: 20,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([14, 1, 13, -14, 1, 15]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy(7, 1).line([0, 3]);
+            circuit.xy(11, 5).counterTen();
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>次はさきほどとほとんど同じですが、サイクル6のカウンタです。</p>
+    <div id="cellular-automaton-03"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-03",
+          worldWidth: 15,
+          worldHeight: 16,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([14, 1, 13, -14, 1, 15]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy(7, 1).line([0, 3]);
+            circuit.xy(11, 5).counterSix();
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>これまでの回路を組み合わせればバイナリ時計が作れそうです。</p>
+    <p><a href="https://ja.wikipedia.org/wiki/%E3%83%90%E3%82%A4%E3%83%8A%E3%83%AA%E6%99%82%E8%A8%88">バイナリ時計</a>は2進数で時刻を表現した時計です。</p>
+    <p>ここでは分と時の計4桁をそれぞれ2進数で表現しています。</p>
+    <p>時間は24で1サイクルでロジックが少し複雑ですので、線が混み合っています。</p>
+    <p>時間の桁まで変わるときは間に合ってなくて、時間が変わりきる前に次の分に進んでしまいます。</p>
+    <div id="cellular-automaton-05"></div>
+    <script>
+      circuitModules.push((Circuit) => {
+        Circuit.prototype.counter24 = function () {
+          const circuit = this;
+
+          circuit.xy(7, 7).line([0, 3, 4, 13, -7, -2]);
+          circuit.xy(0, 0).counterTen();
+          circuit.xy(-5, 11).line([0, 3, 4, 16, -7, -1]);
+          circuit.xy(-12, 0).counter(2);
+
+          circuit.xy(-5, 5).cut();
+          circuit.xy(-5, 5).line([-3, -1, -3]);
+          circuit.xy(-5, 5).reverse(true);
+          circuit.xy(-8, 5).reverse();
+
+          circuit.xy(-7, 1).line([-1, -2]);
+          circuit.xy(-11, 4).line([0, -1, 3, 2]);
+          circuit.xy(-11, 3).reverse();
+          circuit.xy(-8, 3).reverse();
+
+          circuit.xy(-5, 6).reverse();
+          circuit.xy(-8, 6).reverse();
+          circuit.xy(-4, 4).value(true);
+          circuit.xy(-4, 5).value(true);
+          circuit.xy(-5, 5).line([0, 2, 5, 7, 2, -3]);
+          circuit.xy(-11, 5).line([1]);
+          circuit.xy(-8, 1).line([-2]);
+          circuit.xy(-4, -3).line([-13, -3, 1, -3, -2]);
+          circuit.xy(-5, 7).reverse();
+
+          circuit.xy(-10,  6).reverse();
+          circuit.xy(-10,  5).reverse();
+          circuit.xy(-11,  5).reverse(true);
+          circuit.xy(-11,  4).reverse();
+
+          circuit.xy(-10,  2).reverse(true);
+          circuit.xy(-10,  1).reverse();
+
+          circuit.xy( -8, -3).reverse();
+          circuit.xy( -7, -3).reverse(true);
+          circuit.xy( -8, -2).reverse(true);
+        }
+
+      });
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-05",
+          worldWidth: 50,
+          worldHeight: 19,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5", "speed6", "speed7",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(37, 0).line([12, 18, 1, 17, -11, 1]);
+            circuit.xy(39, 0).reverse();
+            circuit.xy(49, 0).reverse();
+
+            circuit.xy(40, 1).line([0, 2]);
+            circuit.xy(44, 4).counterTen();
+
+            circuit.xy(39, 15).line([0, 3, 4, 17, -7, -2]);
+            circuit.xy(32,  4).counterSix();
+
+            circuit.xy(20,  4).counter24();
+
+            circuit.xy(44,  6).text("1m");
+            circuit.xy(44, 10).text("2m");
+            circuit.xy(44, 14).text("4m");
+            circuit.xy(44, 18).text("8m");
+            circuit.xy(32,  6).text("10m");
+            circuit.xy(32, 10).text("20m");
+            circuit.xy(32, 14).text("40m");
+            circuit.xy(20,  6).text("1h");
+            circuit.xy(20, 10).text("2h");
+            circuit.xy(20, 14).text("4h");
+            circuit.xy(20, 18).text("8h");
+            circuit.xy( 8,  6).text("10h");
+            circuit.xy( 8, 10).text("20h");
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>
