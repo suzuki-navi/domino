@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>7セグメントディスプレイ その1 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="7セグメントディスプレイ その1"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/display1.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/display1_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>7セグメントディスプレイ その1</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の8つ目です。(2022/12/16)</p>
+    <p><a href="https://ja.wikipedia.org/wiki/7%E3%82%BB%E3%82%B0%E3%83%A1%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4">7セグメントディスプレイ</a>を作ってみました。</p>
+    <p>7セグメントディスプレイは電卓や体温計などで使われる、四角い、いかにもデジタルな感じの数字です。8の字型に直線7個が配置されています。各直線をセグメントと言い、それが7つあるので7セグメントディスプレイと言います。</p>
+    <p>現実世界でのディスプレイはCPUの外にあるLEDなどの別の素子で表示させますが、このセルオートマトンの世界ではCPUを流れる信号が見えるのでそれをそのまま表示器に利用しています。</p>
+    <p>このディスプレイでは下から信号を流しています。信号の伝達経路自体も見えてしまいますので、表示中のセグメントに隣接させ、すべての信号伝達経路をそれ自体セグメントと兼ねさせています。信号線の幅があるため表示する数字は不格好です。</p>
+    <p style="float:right; padding-right: 20px;">
+      <img src="display1_3.png" width="571" height="642" style="width: auto; height: 321px;">      <img src="display1_2.png" width="581" height="639" style="width: auto; height: 320px;"><img src="display1_5.png" width="528" height="639" style="width: auto; height: 321px;">
+    </p>
+    <p>難しいのは、上半分のセグメントへの信号をどう伝えるかです。下にある表示中のセグメントに沿って信号を伝達したいのですが、そうなると数字によって伝達経路が変わってきます。一番上のセグメントは、 "3" では右の辺を下から上まで通ればよいですが、 "2" ではいったん左の辺を通り中央を右に渡る必要があります。 "5" は逆にいったん右の辺を通り中央を左に渡る必要があります。経路が3パターンあるわけです。</p>
+    <p>同様に、上半分の縦棒2つはそれぞれ経路が2パターンあります。中央の横棒も経路が2パターンあります。下半分の経路は1パターンのみです。合計で信号経路は12本あることになります。</p>
+    <p>すべての表示パターンを網羅する必要はなく10種類の数字さえ表示できればよいので、12本のうち一部信号線は集約できます。その結果、8本の信号線による制御となりました。複数の信号線を経路の途中まで重複させるわけです。</p>
+    <div id="cellular-automaton-01" style="float:left; padding-right: 20px;"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 24,
+          worldHeight: 36,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 1,  1).sevenSegmentDisplay();
+
+            circuit.xy( 1, 34).line([0, -2, -1, 3]);
+            circuit.xy( 1, 34).button();
+            circuit.xy( 1, 33).text("A");
+
+            circuit.xy( 4, 34).line([0, -3, -2, 2]);
+            circuit.xy( 4, 34).button();
+            circuit.xy( 4, 33).text("B");
+
+            circuit.xy( 7, 34).line([0, -3, -2, 2]);
+            circuit.xy( 7, 34).button();
+            circuit.xy( 7, 33).text("C");
+
+            circuit.xy(10, 34).line( [0, -4, 6, -1]);
+            circuit.xy(10, 34).button();
+            circuit.xy(10, 33).text("D");
+
+            circuit.xy(13, 34).line([0, -3, 4, -2]);
+            circuit.xy(13, 34).button();
+            circuit.xy(13, 33).text("E");
+
+            circuit.xy(16, 34).line([0, -2, 2, -3]);
+            circuit.xy(16, 34).button();
+            circuit.xy(16, 33).text("F");
+
+            circuit.xy(19, 34).line([0, -2, 2, -3]);
+            circuit.xy(19, 34).button();
+            circuit.xy(19, 33).text("G");
+
+            circuit.xy(22, 34).line([0, -5]);
+            circuit.xy(22, 34).button();
+            circuit.xy(22, 33).text("H");
+          }
+        });
+      });
+    </script>
+    <p>この回路は、下に8個のボタンがありますので、試すことができます。</p>
+    <p>どのボタンを押せば目的の数字が表示されるのかを回路だけ見て判断するのは難しいです。次の表を参考にしてください。</p>
+    <table>
+      <tr><th>数字</th><th>入力</th><th>表示セグメント</th></tr>
+      <tr><td>非表示</td><td>C, E, G, H</td><td>なし</td></tr>
+      <tr><td>0</td><td>B, E</td><td>上、左上、右上、左下、右下、下</td></tr>
+      <tr><td>1</td><td>C, E, H</td><td>右上、右下</td></tr>
+      <tr><td>2</td><td>A, B, E, G, H</td><td>上、右上、中、左下、下</td></tr>
+      <tr><td>3</td><td>D</td><td>上、右上、中、右下、下</td></tr>
+      <tr><td>4</td><td>C, H</td><td>左上、右上、中、右下</td></tr>
+      <tr><td>5</td><td>F, G, H</td><td>上、左上、中、右下、下</td></tr>
+      <tr><td>6</td><td>B, F, G, H</td><td>上、左上、中、左下、右下、下</td></tr>
+      <tr><td>7</td><td>C, E</td><td>上、右上、右下</td></tr>
+      <tr><td>8</td><td>B または B, F</td><td>上、左上、右上、中、左下、右下、下</td></tr>
+      <tr><td>9</td><td>入力なし または F</td><td>上、左上、右上、中、右下、下</td></tr>
+    </table>
+    <p>各セグメントの表示ロジックは次の通りです。</p>
+    <table>
+      <tr><th>セグメント</th><th>表示条件</th></tr>
+      <tr><td>上</td><td>A or F or NOT H</td></tr>
+      <tr><td>左上</td><td>(NOT A and 左下) or (NOT 左下 and 中 and NOT D)</td></tr>
+      <tr><td>右上</td><td>A or NOT G</td></tr>
+      <tr><td>中</td><td>A or NOT E</td></tr>
+      <tr><td>左下</td><td>B</td></tr>
+      <tr><td>右下</td><td>NOT (A or (E and G))</td></tr>
+      <tr><td>下</td><td>NOT C</td></tr>
+    </table>
+    <p>マイナス符号を表示することはできません。マイナスは中央の横棒のみとなり、空中に浮いていて下から信号を伝えることができないので、今回のこのディスプレイのコンセプトでは不可能です。</p>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>
