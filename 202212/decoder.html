@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>デコーダ | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="デコーダ"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/decoder.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/decoder_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>デコーダ</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の10本目です。(2022/12/20)</p>
+    <p><a href="display1.html">7セグメントディスプレイ</a>を作り、<a href="https://qiita.com/suzuki-navi/items/dcd815d142355f9db2c3">2進数を10進数に変換</a>する仕組みも理解したので、任意の2進数をディスプレイに表示したいのですが、まだ必要な回路がありますのでこれから準備していきます。まずはデコーダです。</p>
+    <p>デコーダとは、2進数の数値を入力信号として、その数値に対応する出力をする回路です。例えばこんな動きをする回路です。</p>
+    <p>左の回路はカウンタで、0から15を順番に出力しています。右の回路がデコーダです。4ビットの入力信号を左から受け入れ、下方向に16本のいずれかを出力します。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 53,
+          worldHeight: 22,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([17, 1, 16, -19, 1, 20]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy( 4,  1).line([0, 2]);
+            circuit.xy(8, 4).counter(4);
+
+            circuit.xy( 9,  5).line([41]);
+            circuit.xy( 9,  9).line([1, -2, 40]);
+            circuit.xy( 9, 13).line([2, -4, 39]);
+            circuit.xy( 9, 17).line([3, -6, 38]);
+
+            circuit.xy(20, 5).selector1({bitCount:4, start:0, end:16, inputInterval:2});
+
+            for (let i = 0; i < 16; i++) {
+              circuit.xy(21+2*i, 12).line([0, 8]);
+              circuit.xy(21+2*i, 20).text(i);
+            }
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>応用です。次の例では入力が3の倍数(0, 3, 6, 9, 12, 15)のときにのみOnを出力し、それ以外はOffとなる回路です。たまにゴミが出てきますが、これは許容することにします。</p>
+    <p>CPUの中では入力が特定のパターンのときにだけ出力するという回路が多く必要で、このように格子状の回路がたくさんできます。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          worldWidth: 53,
+          worldHeight: 22,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([17, 1, 16, -19, 1, 20]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy( 4,  1).line([0, 2]);
+            circuit.xy(8, 4).counter(4);
+
+            circuit.xy( 9,  5).line([21]);
+            circuit.xy( 9,  9).line([1, -2, 20]);
+            circuit.xy( 9, 13).line([2, -4, 19]);
+            circuit.xy( 9, 17).line([3, -6, 18]);
+
+            circuit.xy(20, 5).selector1({bitCount:4, values:[0, 3, 6, 9, 12, 15], inputInterval:2});
+
+            for (let i = 0; i < 6; i++) {
+              circuit.xy(21+2*i, 12).line([0, 4]);
+              circuit.xy(21+2*i, 15).text(i * 3);
+            }
+            circuit.xy(21, 16).line([20]);
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p>次は出力が2つあるパターンです。Fizz Buzz問題です。入力が3の倍数と5の倍数のときに出力をします。</p>
+    <p>これをソフトウェアで実装すると</p>
+    <pre>if (x % 3 == 0) {
+  ...;
+} else if (x % 5 == 0) {
+  ...;
+}</pre>
+    <p>のようなコードになり、剰余計算が必要になりますが、ビット数が限られていればこのようにハードウェアで実装されていると処理が速いです。</p>
+    <div id="cellular-automaton-03"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-03",
+          worldWidth: 53,
+          worldHeight: 22,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([17, 1, 16, -19, 1, 20]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy( 4,  1).line([0, 2]);
+            circuit.xy(8, 4).counter(4);
+
+            circuit.xy( 9,  5).line([11]);
+            circuit.xy( 9,  9).line([1, -2, 10]);
+            circuit.xy( 9, 13).line([2, -4, 9]);
+            circuit.xy( 9, 17).line([3, -6, 8]);
+
+            circuit.xy(44, 15).text("3: Fizz");
+            circuit.xy(44, 17).text("5: Buzz");
+
+            circuit.xy(20, 5).selector3(24, {input:[0, 2, 4, 6], output:[10, 12], series:[
+              {skip: 1},
+              {pos:[0, 2, 4, 6, 10], cond:["in0", "in0", "in0", "in0", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 12], cond:["in0", "in0", "in0", "in0", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 10], cond:["in1", "in1", "in0", "in0", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 12], cond:["in1", "in0", "in1", "in0", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 10], cond:["in0", "in1", "in1", "in0", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 10], cond:["in1", "in0", "in0", "in1", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 12], cond:["in0", "in1", "in0", "in1", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 10], cond:["in0", "in0", "in1", "in1", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 10], cond:["in1", "in1", "in1", "in1", "out"], opts:[["reverse"]]},
+              {pos:[0, 2, 4, 6, 12], cond:["in1", "in1", "in1", "in1", "out"], opts:[["reverse"]]},
+              {skip: 1},
+            ]});
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>

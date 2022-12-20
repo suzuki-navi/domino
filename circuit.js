@@ -155,5 +155,338 @@ circuitModules.push((Circuit) => {
     circuit.xy(-6, 2).reverse();
   }
 
+  Circuit.prototype.selector1 = function ({bitCount, values, start, end, inputInterval = 2, outputInterval = 2}) {
+    const circuit = this;
+
+    if (start != undefined && end != undefined) {
+      values = [];
+      for (let i = start; i < end; i++) {
+        values.push(i);
+      }
+    }
+
+    for (let i = 0; i < values.length; i++) {
+      let v = values[i];
+      for (let j = 0; j < bitCount; j++) {
+        if (typeof(v) == "number") {
+          circuit.xy(outputInterval*i, inputInterval*j).line([0, 1, -1]);
+          if (v % 2 != 0) {
+            circuit.xy(outputInterval*i, inputInterval*j+1).reverse();
+          }
+          v = v >> 1;
+        } else {
+          if (v[j] == null) {
+            // nothing
+          } else if (v[j]) {
+            circuit.xy(outputInterval*i, inputInterval*j).line([0, 1, -1]);
+            circuit.xy(outputInterval*i, inputInterval*j+1).reverse();
+          } else {
+            circuit.xy(outputInterval*i, inputInterval*j).line([0, 1, -1]);
+          }
+        }
+      }
+      circuit.xy(outputInterval*i+1, 1).line([0, inputInterval*(bitCount-1)]);
+      circuit.xy(outputInterval*i+1, inputInterval*(bitCount-1)+1).reverse();
+    }
+  }
+
+  Circuit.prototype.selector3 = function (length, {input, output, series}) {
+    const circuit = this;
+
+    for (let i = 0; i < series.length; i++) {
+      if (!series[i].pos) {
+        series[i].pos = [];
+        series[i].cond = [];
+      }
+      for (let j = 0; j < series[i].cond.length; j++) {
+        if (series[i].cond[j] == null) {
+          series[i].cond[j] = [];
+        } else if (typeof(series[i].cond[j]) == "string") {
+          series[i].cond[j] = [series[i].cond[j]];
+        }
+      }
+      if (series[i].opts && series[i].opts.length > 0) {
+        for (let j = 1; j < series[i].opts.length; j++) {
+          series[i].cond[j-1] = series[i].cond[j-1].concat(series[i].opts[j]);
+        }
+        series[i].opts = series[i].opts[0];
+      } else {
+        series[i].opts = [];
+      }
+    }
+
+    let maxPosition = 0;
+    for (let i = 0; i < input.length; i++) {
+      const p = input[i];
+      if (maxPosition < p) {
+        maxPosition = p;
+      }
+    }
+    for (let i = 0; i < output.length; i++) {
+      const p = output[i];
+      if (maxPosition < p) {
+        maxPosition = p;
+      }
+    }
+    for (let i = 0; i < series.length; i++) {
+      for (let j = 0; j < series[i].pos.length; j++) {
+        const p = series[i].pos[j];
+        if (maxPosition < p) {
+          maxPosition = p;
+        }
+      }
+    }
+
+    const lineLastIndexList = [];
+    const lineStartEndPositionList = [];
+    for (let i = 0; i <= maxPosition; i++) {
+      lineLastIndexList.push(-1);
+      lineStartEndPositionList.push({start:-1, end:-1});
+    }
+    for (let i = 0; i < series.length; i++) {
+      for (let j = 0; j < series[i].pos.length; j++) {
+        const p = series[i].pos[j];
+        lineLastIndexList[p] = i;
+      }
+    }
+    for (let i = 0; i < output.length; i++) {
+      const p = output[i];
+      lineLastIndexList[p] = series.length;
+    }
+    for (let i = 0; i < input.length; i++) {
+      const p = input[i];
+      lineStartEndPositionList[p].start = 0;
+    }
+
+    const notStatus = [];
+    for (let i = 0; i < maxPosition; i++) {
+      notStatus.push(false);
+    }
+
+    let elemPos = 0;
+    for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
+      const elem = series[seriesIdx];
+
+      if (elem.endOut != undefined) {
+        notStatus[elem.endOut] = false;
+        const prev = lineStartEndPositionList[elem.endOut];
+        lineStartEndPositionList[elem.endOut] = {start:-1, end:-1, prev};
+      }
+
+      let outIdx = -1;
+      for (let i = 0; i < elem.cond.length; i++) {
+        if (elem.cond[i].includes("out")) {
+          outIdx = i;
+          break;
+        }
+      }
+      if (outIdx < 0) {
+        if (elem.skip == undefined) {
+          elem.skip = 0;
+        }
+        elemPos += elem.skip;
+        continue;
+      }
+
+      let inIdxs = [];
+      for (let i = 0; i < elem.cond.length; i++) {
+        if (elem.cond[i].includes("in0") || elem.cond[i].includes("in1")) {
+          inIdxs.push(i);
+        }
+      }
+
+      const outPos = elem.pos[outIdx];
+
+      let existsUpper = false;
+      let existsLower = false;
+      let posMin = outPos;
+      let posMax = outPos;
+
+      for (let i = 0; i < inIdxs.length; i++) {
+        const pos = elem.pos[inIdxs[i]];
+        if (posMin > pos) {
+          existsUpper = true;
+          posMin = pos;
+        } else if (posMax < pos) {
+          existsLower = true;
+          posMax = pos;
+        }
+      }
+
+      let isOutUpper = elem.cond[outIdx].includes("upper");
+      if (elem.cond[outIdx].includes("lower")) {
+        isOutUpper = false;
+      } else if (!existsLower) {
+        isOutUpper = true;
+      }
+
+      let outNotPosition = null;
+      for (let i = 0; i < elem.cond[outIdx].length; i++) {
+        if (elem.cond[outIdx][i].startsWith("notPos")) {
+          outNotPosition = parseInt(elem.cond[outIdx][i].substring(6));
+        }
+      }
+      if (outNotPosition == null) {
+        if (lineStartEndPositionList[outPos].start < 0) {
+          outNotPosition = 0;
+        } else {
+          outNotPosition = 1;
+        }
+      }
+      if (isOutUpper) {
+        outNotPosition = -outNotPosition;
+      }
+
+      if (inIdxs.length == 1) {
+        if (existsUpper) {
+          if (elem.skip == undefined) {
+            elem.skip = 1;
+          }
+        } else {
+          elemPos--;
+        }
+      }
+
+      for (const isUpperSide of [true, false]) {
+        let upperSideFlagSign;
+        if (isUpperSide) {
+          upperSideFlagSign = +1;
+        } else {
+          upperSideFlagSign = -1;
+        }
+        for (let i = 0; i < inIdxs.length; i++) {
+          const pos = elem.pos[inIdxs[i]];
+          if ((pos >= elem.pos[outIdx]) == isUpperSide) continue;
+          if (pos == posMin && isUpperSide || pos == posMax && !isUpperSide) {
+            let len;
+            if (isUpperSide) {
+              len = elem.pos[outIdx] - posMin;
+            } else {
+              len = posMax - elem.pos[outIdx];
+            }
+            if (elem.opts.includes("reverse") == isUpperSide) {
+              if (isOutUpper == isUpperSide) {
+                circuit.xy(elemPos + 1, pos).line([0, (len - 1) * upperSideFlagSign]);
+              } else {
+                circuit.xy(elemPos + 1, pos).line([0, (len + 1) * upperSideFlagSign, +upperSideFlagSign]);
+              }
+            } else {
+              if (isOutUpper == isUpperSide) {
+                circuit.xy(elemPos + 0, pos).line([0, (len - 1) * upperSideFlagSign]);
+              } else {
+                circuit.xy(elemPos + 0, pos).line([0, (len + 1) * upperSideFlagSign, -upperSideFlagSign]);
+              }
+            }
+            if (inIdxs.length > 1) {
+              if (notStatus[pos] != elem.cond[inIdxs[i]].includes("in1")) {
+                if (elem.opts.includes("reverse") == isUpperSide) {
+                  circuit.xy(elemPos + 1, pos).reverse();
+                } else {
+                  circuit.xy(elemPos + 0, pos).reverse();
+                }
+                notStatus[pos] = elem.cond[inIdxs[i]].includes("in1");
+              }
+            } else {
+              if (notStatus[pos] == elem.cond[inIdxs[i]].includes("in1")) {
+                if (elem.opts.includes("reverse") == isUpperSide) {
+                  circuit.xy(elemPos + 1, pos).reverse();
+                } else {
+                  circuit.xy(elemPos + 0, pos).reverse();
+                }
+                notStatus[pos] = !elem.cond[inIdxs[i]].includes("in1");
+              }
+            }
+            if (elem.opts.includes("reverse") == isUpperSide) {
+              if (lineStartEndPositionList[pos].end < elemPos + 1) {
+                lineStartEndPositionList[pos].end = elemPos + 1;
+              }
+            } else {
+              if (lineStartEndPositionList[pos].end < elemPos + 0) {
+                lineStartEndPositionList[pos].end = elemPos + 0;
+              }
+            }
+          } else {
+            if (elem.opts.includes("reverse") == isUpperSide) {
+              circuit.xy(elemPos + 0, pos).line([0, 1, -1]);
+            } else {
+              circuit.xy(elemPos + 1, pos).line([0, 1, +1]);
+            }
+            if (notStatus[pos] != elem.cond[inIdxs[i]].includes("in1")) {
+              if (elem.opts.includes("reverse") == isUpperSide) {
+                circuit.xy(elemPos + 0, pos).reverse();
+              } else {
+                circuit.xy(elemPos + 1, pos).reverse();
+              }
+              notStatus[pos] = elem.cond[inIdxs[i]].includes("in1");
+            }
+            if (elem.opts.includes("reverse") == isUpperSide) {
+              if (lineStartEndPositionList[pos].end < elemPos + 0) {
+                lineStartEndPositionList[pos].end = elemPos + 0;
+              }
+            } else {
+              if (lineStartEndPositionList[pos].end < elemPos + 1) {
+                lineStartEndPositionList[pos].end = elemPos + 1;
+              }
+            }
+          }
+        }
+      }
+
+      if (inIdxs.length > 1) {
+        if (elem.opts.includes("reverse") == isOutUpper) {
+          circuit.xy(elemPos + 1, outPos + outNotPosition).reverse();
+        } else {
+          circuit.xy(elemPos + 0, outPos + outNotPosition).reverse();
+        }
+      }
+      let isOutUpperSignFlag;
+      if (isOutUpper) {
+        isOutUpperSignFlag = +1;
+      } else {
+        isOutUpperSignFlag = -1;
+      }
+      if (elem.opts.includes("reverse") == isOutUpper) {
+        circuit.xy(elemPos + 1, outPos - isOutUpperSignFlag).line([0, isOutUpperSignFlag]);
+        if (lineStartEndPositionList[outPos].start < 0) {
+          lineStartEndPositionList[outPos].start = elemPos + 1;
+        }
+      } else {
+        circuit.xy(elemPos + 0, outPos - isOutUpperSignFlag).line([0, isOutUpperSignFlag]);
+        if (lineStartEndPositionList[outPos].start < 0) {
+          lineStartEndPositionList[outPos].start = elemPos + 0;
+        }
+      }
+
+      if (elem.skip == undefined) {
+        if (inIdxs.length > 0) {
+          elem.skip = 2;
+        } else {
+          elem.skip = 0;
+        }
+      }
+      elemPos += elem.skip;
+    } // for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++)
+
+    elemPos--;
+    if (elemPos > length) {
+      throw "length shortage";
+    }
+    for (let i = 0; i < output.length; i++) {
+      const p = output[i];
+      lineStartEndPositionList[p].end = length;
+    }
+
+    for (let i = 0; i < lineStartEndPositionList.length; i++) {
+      writeHorizontalLine(lineStartEndPositionList[i]);
+      function writeHorizontalLine(posInfo) {
+        if (posInfo.start >= 0 && posInfo.end >= 0) {
+          circuit.xy(posInfo.start, i).line([posInfo.end - posInfo.start]);
+        }
+        if (posInfo.prev) {
+          writeHorizontalLine(posInfo.prev);
+        }
+      }
+    }
+  }
 });
 
