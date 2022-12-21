@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>7セグメントディスプレイ その2 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="7セグメントディスプレイ その2"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/display2.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/display2_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>7セグメントディスプレイ その2</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の11本目です。(2022/12/21)</p>
+    <p>2進数で数値を入力することで7セグメントディスプレイに数字を表示させるようにしました。前回の<a href="display1.html">7セグメントディスプレイ</a>では8本の信号を入力する必要がありましたが、今回は2進数の数値から8本の信号を生成する回路をディスプレイの下に追加しています。</p>
+    <div id="cellular-automaton-01" style="float:left; padding-right: 20px;"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 30,
+          worldHeight: 70,
+          initialScale: 4,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 4,  1).sevenSegmentDisplay();
+
+            circuit.xy( 3, 29).text("A");
+            circuit.xy( 5, 29).text("B");
+            circuit.xy( 8, 29).text("C");
+            circuit.xy(19, 29).text("D");
+            circuit.xy(20, 29).text("E");
+            circuit.xy(21, 29).text("F");
+            circuit.xy(24, 29).text("G");
+            circuit.xy(25, 29).text("H");
+
+            circuit.xy( 2, 64).rot(3).sevenSegmentDisplaySelector();
+
+            for (let i = 0; i <= 4; i++) {
+              const [x, status, text] = ([
+                [ 2, true, "POWER"],
+                [ 7, false, "1"],
+                [11, false, "2"],
+                [15, false, "4"],
+                [19, false, "8"],
+              ])[i];
+              circuit.xy(x, 68).button();
+              if (status) {
+                circuit.xy(x, 68).reverse();
+              }
+              circuit.xy(x, 68).line([0, -4]);
+              circuit.xy(x, 69).text(text);
+            }
+          },
+        });
+      });
+    </script>
+    <p>8本の信号を生成する回路は前回の<a href="decoder.html">デコーダ</a>の応用です。格子状に回路を組んでいます。</p>
+    <p>少しでも省スペースになるように職人技で詰め込んでいます。とはいえまだ無駄なところが多く改良の余地が残っています。</p>
+    <p>回路の中身は論理回路AND/OR/NOTを詰め込んでいるだけです。たとえば7セグメントディスプレイへの信号線のうち一番左(Aと書いてあるところ)は、入力された数字が2のときにだけOnになります。したがって次のようになります。</p>
+    <ul>
+      <li>信号線A = POWER AND NOT 入力1 AND 入力2 AND NOT 入力4 AND NOT 入力8</li>
+    </ul>
+    <p>この論理式は回路の中の一番下、ボタンのすぐ上に実装されています</p>
+    <p>一番下にボタンが5つあります。一番左のボタンが電源ボタンで初期状態でOnになっています。残り4つが2進数による数字の入力ボタンです。電源ボタンをOffにすると表示が消えます。</p>
+    <p>回路の上にあるSpeedボタンまたは下の5つのボタンのいずれかを押すと、動き始めます。最初はゴミが大量に流れます。ゴミがすべて流れきると数字が表示されているはずです。</p>
+    <p>10以上の数字を入力しても7セグメントは1桁しかありませんので、表示できません。10以上の入力の場合には電源Off状態とも区別したかったので、空白でも数字でもない文字として下線を表示するようにしました。</p>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>

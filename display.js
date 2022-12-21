@@ -75,5 +75,104 @@ circuitModules.push((Circuit) => {
     circuit.xy( 4, 24).line([10]);
     circuit.xy( 4, 27).reverse();
   }
+
+  Circuit.prototype.sevenSegmentDisplaySelector = function () {
+    const circuit = this;
+
+    circuit.selector3(35, {input:[0, 5, 9, 13, 17], output:[1, 3, 6, 17, 18, 19, 22, 23], series:[
+      {skip: 1},
+
+      {pos:[ 5,  7], cond:["in1", "out"]},
+      {skip:-1},
+      {pos:[ 9, 11], cond:["in1", "out"]},
+      {skip:-1},
+      {pos:[13, 15], cond:["in1", "out"]},
+      {skip:-1},
+      {pos:[17, 19], cond:["in1", "out"]},
+      {skip:-1},
+
+      {pos:[ 0,  7, 11, 15, 17,  1], cond:["in1", "in0", "in1", "in0", "in0", "out"]},
+
+      {pos:[0, 21], cond:["in1", "out"]},
+
+      {pos:[21,  7, 11, 15, 19,  2], cond:["in1", "in0", "in0", "in0", "in0", "out"], opts:[["reverse"]]},
+      {skip:-1},
+      {pos:[21,  5,  9, 13, 17,  3], cond:["in1", "in0", "in1", "in2", "in0", "out"]},
+      {pos:[3, 23], cond:["in1", "out"]},
+      {pos:[3, 2], cond:["in1", "out"]},
+      {endOut:3},
+      {skip:-1},
+      {pos:[ 0,  5,  9, 13, 17, 23], cond:["in1", "in1", "in0", "in2", "in0", "out"], opts:[["reverse"]]},
+      {pos:[21,  7, 11, 15, 19,  2], cond:["in1", "in0", "in0", "in0", "in1", "out"], opts:[["reverse"]]},
+      {skip:-1},
+
+      {pos:[ 0,  5,  9, 13, 17,  3], cond:["in0", "in2", "in2", "in2", "in2", "out"], opts:[[], [], [], [], [], [], ["upper"]]},
+      {skip:-1},
+      {pos:[21,  5,  9, 13, 17,  3], cond:["in1", "in1", "in0", "in0", "in0", "out"]},
+      {pos:[21,  7, 11, 15, 19,  3], cond:["in1", "in0", "in0", "in1", "in0", "out"], opts:[["reverse"]]},
+      {skip:-1},
+      {pos:[21,  5,  9, 13, 17, 23], cond:["in0", "in2", "in2", "in2", "in2", "out"], opts:[[], [], [], [], [], [], ["upper"]]},
+      {skip:-1},
+      {pos:[21,  5,  9, 13, 17,  3], cond:["in1", "in1", "in1", "in1", "in0", "out"]},
+
+      {pos:[0, 4], cond:["in1", "out"]},
+      {skip:-1},
+
+      {pos:[21,  7, 11, 15, 19, 23], cond:["in1", "in0", "in0", "in1", "in2", "out"]},
+      {skip:-1},
+
+      {pos:[ 4,  5,  9, 13, 17, 22], cond:["in1", "in0", "in1", "in2", "in2", "out"], opts:[["reverse"]]},
+
+      {pos:[0, 5, 9, 13, 17, 24], cond:["in2", "in2", "in1", "in0", "in1", "out"]},
+      {skip:-1},
+      {pos:[0, 5, 9, 15, 19, 24], cond:["in2", "in2", "in2", "in1", "in1", "out"], opts:[["reverse"], [], [], [], [], [], ["notPos3"]]},
+
+      {pos:[ 4,  7, 11, 15, 19, 22], cond:["in1", "in1", "in0", "in1", "in2", "out"]},
+      {skip:-1},
+
+      {endOut:21},
+      {pos:[ 4,  5,  9, 13, 17, 21], cond:["in1", "in1", "in0", "in1", "in0", "out"], opts:[["reverse"]]},
+      {pos:[ 4,  5,  9, 13, 19, 21], cond:["in1", "in0", "in1", "in1", "in0", "out"]},
+
+      {skip:-1},
+      {pos:[ 4,  5, 11, 15, 17, 20], cond:["in1", "in2", "in0", "in0", "in0", "out"], opts:[["reverse"]]},
+      {pos:[ 4,  7,  9, 15, 17, 20], cond:["in1", "in0", "in2", "in0", "in0", "out"]},
+      {skip:-1},
+      {pos:[ 4,  5,  9, 13, 17, 20], cond:["in1", "in1", "in1", "in1", "in2", "out"], opts:[["reverse"]]},
+
+      {skip:-4},
+      {pos:[24, 23], cond:["in1", "out"]},
+      {pos:[24, 22], cond:["in1", "out"]},
+      {pos:[24, 20], cond:["in1", "out"]},
+      {skip:1},
+
+      {pos:[ 4,  5,  9, 13, 17, 22], cond:["in0", "in2", "in2", "in2", "in2", "out"], opts:[[], [], [], [], [], [], ["upper"]]},
+      {pos:[ 4,  5,  9, 13, 17, 20], cond:["in0", "in2", "in2", "in2", "in2", "out"], opts:[[], [], [], [], [], [], ["upper"]]},
+
+      {endOut:7},
+      {pos:[4, 7], cond:["in1", "out"]},
+      {skip:-1},
+      {endOut:15},
+      {pos:[17, 15], cond:["in1", "out"]},
+
+      {skip:-1},
+      {pos:[20, 18], cond:["in1", "out"]},
+      {endOut:19},
+      {pos:[21, 19], cond:["in1", "out"]},
+
+      {skip:-1},
+      {endOut:17},
+      {pos:[7, 5, 9, 13, 15, 17], cond:["in1", "in1", "in1", "in0", "in0", "out"]},
+      {skip:-2},
+      {endOut:4},
+      {pos:[3, 4], cond:["in1", "out"]},
+      {endOut:6},
+      {pos:[4, 6], cond:["in1", "out"]},
+      {skip:-1},
+      {endOut:3},
+      {pos:[2, 3], cond:["in1", "out"]},
+    ]});
+  }
+
 });
 
