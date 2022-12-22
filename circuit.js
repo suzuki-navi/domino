@@ -155,6 +155,29 @@ circuitModules.push((Circuit) => {
     circuit.xy(-6, 2).reverse();
   }
 
+  Circuit.prototype.resetableCounter = function (bitCount) {
+    const circuit = this;
+    circuit.flip().counter(bitCount);
+
+    const gridHeight = 4;
+    for (let i = 0; i < bitCount; i++) {
+      const cir = circuit.xy(0, i * gridHeight);
+      cir.xy(-4, 0).line([3]);
+      cir.xy(-3, -3).line([0, 4, -2]);
+      cir.xy(-3, -1).line([1, 1]);
+      cir.xy(-1, 2).reverse(true);
+      cir.xy(-1, 1).reverse();
+      cir.xy(-2, -1).reverse();
+      cir.xy(-2, 0).reverse();
+      if (i == bitCount - 1) {
+        cir.xy(3, 1).line([4]);
+      } else {
+        cir.xy(6, -2).line([0, 4, 1]);
+        cir.xy(5, 1).line([2]);
+      }
+    }
+  }
+
   Circuit.prototype.selector1 = function ({bitCount, values, start, end, inputInterval = 2, outputInterval = 2}) {
     const circuit = this;
 

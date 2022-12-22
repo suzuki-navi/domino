@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>リセット機能付きカウンタ | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="リセット機能付きカウンタ"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/counter2.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/counter2_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>リセット機能付きカウンタ</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の12本目です。(2022/12/22)</p>
+    <p>以前に単純な<a href="counter1.html">カウンタ</a>を作成しました。今回は値の設定が可能なカウンタです。クロックが来るごとにカウントアップした値を出力しますが、SETボタンが押されているときは左からの入力値を出力します。SETボタンが解除されたらその時点の値からカウントアップを再開します。</p>
+    <p>SETボタンがOff状態ではこれまでのカウンタ回路と同じ動きです。SETボタンがOnになると、左側の入力と右側のクロック入力の両方に作用します。左側では、SETボタンがOnのときには自己保持回路としてのループバックを切断して、左からの入力を受け入れるようになります。右側では、SETボタンがOnのときにはクロックがすべての桁に届くように切り替わります。</p>
+    <p>この回路はデバッグ作業に便利なので作成しました。CPUの中でもプログラムカウンタで利用します。</p>
+    <p>CPUには実行中の命令番地を保存しているレジスタがあります。命令を実行するごとにこのレジスタの値をカウントアップし、その値のメモリ番地に保存されている命令コードをメモリから読み込み、次の命令を実行するというサイクルです。このレジスタをプログラムカウンタといいます。クロックが来るごとにカウントアップすればよいので、このカウンタをそのままプログラムカウンタとして利用できます。CPUはループや条件分岐のためにジャンプすることがあります。ジャンプするときにはプログラムカウンタを任意の値に書き換えることが必要です。そこでこのリセット機能が役に立ちます。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 32,
+          worldHeight: 25,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(0, 0).line([31, 1, 30, -14, 1, 15]);
+            circuit.xy(0, 0).reverse();
+            circuit.xy(10, 0).reverse();
+
+            circuit.xy(20, 1).line([0, 7]);
+            circuit.xy(20, 5).text("Clock");
+            circuit.xy(16, 9).resetableCounter(4);
+            circuit.xy(13, 7).line([9]);
+
+            circuit.xy(12, 5).line([1, 1]);
+            for (let i = 0; i < 5; i++) {
+              const label = ["SET", "1", "2", "4", "8"][i];
+              circuit.xy(4, 5+4*i).text(label);
+              circuit.xy(6, 5+4*i).button();
+              circuit.xy(6, 5+4*i).line([6]);
+            }
+
+            for (let i = 0; i < 4; i++) {
+              const label = ["1", "2", "4", "8"][i];
+              circuit.xy(30, 10+4*i).text(label);
+              circuit.xy(23, 10+4*i).line([6]);
+            }
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>
