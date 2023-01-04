@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>7セグメントディスプレイ付きバイナリ時計 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="カウンタ"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/clock.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/clock_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>7セグメントディスプレイ付きバイナリ時計</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の13本目です。(2023/01/04)</p>
+    <p>以前、<a href="counter1.html">カウンタ</a>を作成したときにバイナリ時計を作りました。<a href="display2.html">7セグメントディスプレイ</a>も作成しましたので、今回は時計にディスプレイを追加します。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      circuitModules.push((Circuit) => {
+        Circuit.prototype.counter24 = function () {
+          const circuit = this;
+
+          circuit.xy(8, 7).line([0, 3, 2, 13, -9, -2]);
+          circuit.xy(1, 0).counterTen();
+          circuit.xy(-4, 11).line([0, 3, 4, 16, -8, -1]);
+          circuit.xy(-12, 0).counter(2);
+
+          circuit.xy(-4, 5).cut();
+          circuit.xy(-4, 5).line([-3, -1, -3]);
+          circuit.xy(-4, 5).reverse(true);
+          circuit.xy(-7, 5).reverse();
+
+          circuit.xy(-6, 1).line([-1, -2]);
+          circuit.xy(-11, 4).line([0, -1, 4, 2]);
+          circuit.xy(-11, 3).reverse();
+          circuit.xy(-7, 3).reverse();
+
+          circuit.xy(-4, 6).reverse();
+          circuit.xy(-7, 6).reverse();
+          circuit.xy(-3, 4).value(true);
+          circuit.xy(-3, 5).value(true);
+          circuit.xy(-4, 5).line([0, 2, 5, 7, 2, -3]);
+          circuit.xy(-11, 5).line([2]);
+          circuit.xy(-7, 1).line([-2]);
+          circuit.xy(-3, -3).line([-14, -3, 1, -3, -2]);
+          circuit.xy(-4, 7).reverse();
+
+          circuit.xy(-9,  6).reverse();
+          circuit.xy(-9,  5).reverse();
+          circuit.xy(-11,  5).reverse(true);
+          circuit.xy(-11,  4).reverse();
+
+          circuit.xy(-9,  2).reverse(true);
+          circuit.xy(-9,  1).reverse();
+
+          circuit.xy( -7, -3).reverse();
+          circuit.xy( -6, -3).reverse(true);
+          circuit.xy( -7, -2).reverse(true);
+        }
+
+      });
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          initialScale: 4,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5", "speed6", "speed7",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 2,  1).sevenSegmentDisplay();
+            circuit.xy( 0, 64).rot(3).sevenSegmentDisplaySelector();
+            circuit.xy(26,  1).sevenSegmentDisplay();
+            circuit.xy(24, 64).rot(3).sevenSegmentDisplaySelector();
+            circuit.xy(24, 64).reverse();
+
+            circuit.xy(49,  9).reverse();
+            circuit.xy(49, 10).reverse();
+            circuit.xy(50,  9).reverse();
+            circuit.xy(50, 10).reverse();
+            circuit.xy(49, 19).reverse();
+            circuit.xy(49, 20).reverse();
+            circuit.xy(50, 19).reverse();
+            circuit.xy(50, 20).reverse();
+
+            circuit.xy(52,  1).sevenSegmentDisplay();
+            circuit.xy(50, 64).rot(3).sevenSegmentDisplaySelector();
+            circuit.xy(50, 64).reverse();
+            circuit.xy(76,  1).sevenSegmentDisplay();
+            circuit.xy(74, 64).rot(3).sevenSegmentDisplaySelector();
+            circuit.xy(74, 64).reverse();
+
+            circuit.xy(19, 76).line([0, -8, -14, 4]);
+            circuit.xy(19, 82).line([1, -15, -11, 3]);
+            circuit.xy( 5, 68).line([-5, 4]);
+            circuit.xy( 9, 67).line([-9]);
+
+            circuit.xy(32, 76).line([0, -11, -3, 1]);
+            circuit.xy(32, 80).line([0, -1, 1, -15]);
+            circuit.xy(32, 84).line([0, -1, 2, -18, 3, -1]);
+            circuit.xy(32, 88).line([0, -1, 3, -21, 6, -2]);
+
+            circuit.xy(45, 76).line([0, -11, 10, -1]);
+            circuit.xy(45, 80).line([0, -1, 1, -13, 13, -2]);
+            circuit.xy(45, 84).line([0, -1, 2, -16, 16, -3]);
+
+            circuit.xy(57, 76).line([0, -8, 22, -4]);
+            circuit.xy(57, 80).line([0, -1, 1, -10, 25, -5]);
+            circuit.xy(57, 84).line([0, -1, 2, -13, 28, -6]);
+            circuit.xy(57, 88).line([0, -1, 3, -16, 31, -7]);
+
+            ((circuit) => {
+              circuit.xy(50, 1).line([0, 17, -1, -16, 1, 16, -1, -16, 1, 16, -1, -16, 1, 16, -1, -16, 1, 16, -1, -17, -9]);
+              circuit.xy(50, 2).reverse();
+              circuit.xy(50, 12).reverse();
+
+              circuit.xy(50, 1).line([-10, -2]);
+              circuit.xy(44, 4).counterTen();
+
+              circuit.xy(39, 15).line([0, 3, 3, 17, -8, -2]);
+              circuit.xy(32,  4).counterSix();
+
+              circuit.xy(18,  4).counter24();
+
+              circuit.xy(44,  6).text("1m");
+              circuit.xy(44, 10).text("2m");
+              circuit.xy(44, 14).text("4m");
+              circuit.xy(44, 18).text("8m");
+              circuit.xy(32,  6).text("10m");
+              circuit.xy(32, 10).text("20m");
+              circuit.xy(32, 14).text("40m");
+              circuit.xy(19,  6).text("1h");
+              circuit.xy(19, 10).text("2h");
+              circuit.xy(19, 14).text("4h");
+              circuit.xy(19, 18).text("8h");
+              circuit.xy( 6,  6).text("10h");
+              circuit.xy( 6, 10).text("20h");
+            })(circuit.xy(12, 72));
+          }
+        });
+      });
+    </script>
+    <p>一番左の桁が0のときは非表示になるようにしました。1か2が入力されたときにのみディスプレイの電源がOnになるようにしています。</p>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>
