@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>7セグメントディスプレイ その3 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="7セグメントディスプレイ その3"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/display3.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/display3_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>7セグメントディスプレイ その3</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の15本目です。(2023/01/10)</p>
+
+    <p><a href="display2.html">前回のディスプレイの記事</a>では4ビット2進数の入力で1桁の7セグメントディスプレイを作りました。1桁ずつ独立したディスプレイと制御回路でしたので、10進数で2桁以上になる場合は、10進数の1桁ごとに2進数4桁を与える必要があります。これは2進化10進数（binary-coded decimal または BCD）と呼ばれます。</p>
+    <p>たとえば10進数で<code>234</code>という数を考えます。これは2進数で<code>11101010</code>ですが、この数をディスプレイに表示するためには2進化10進数<code>0010 0011 0100</code>に変換する必要があります。</p>
+    <p>2進数を2進化10進数に変換する方法を調べた結果は、<a href="https://qiita.com/suzuki-navi/items/aba3e46db8a0419abac2">10で割る方法</a>と<a href="https://qiita.com/suzuki-navi/items/dcd815d142355f9db2c3">Double Dabbleの説明</a>の記事に書きました。これを踏まえDouble Dabbleによる変換回路を作りました。</p>
+    <p>次の回路が2進数8桁を2進化10進数10桁（10進数で3桁相当）に変換する回路です。0から255までの数値を左にあるカウンター回路で生成し、右の変換回路に渡しています。</p>
+    <p>動かし始めやカウントアップのタイミングでは出力にゴミが出力されますが、しばらくすると出力が落ち着きます。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          //worldWidth: 84,
+          //worldHeight: 51,
+          initialScale: 4,
+          initialSpeed: 4,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([34, 1, 33, -19, 1, 20]);
+            circuit.xy( 4,  1).line([0, 2]);
+            circuit.xy( 0,  0).reverse();
+            circuit.xy(10,  0).reverse();
+
+            circuit.xy( 8,  4).counter(8);
+
+            for (let i = 0; i < 8; i++) {
+              circuit.xy(9, 5 + 4 * i).line([1]);
+            }
+
+            circuit.xy(10,  5).line([5, 10, -60]);
+
+            circuit.xy(10,  9).line([4, 8, -48]);
+            circuit.xy(10, 13).line([3, 6, -36]);
+            circuit.xy(10, 17).line([2, 4, -24]);
+            circuit.xy(10, 21).line([1, 2, -12]);
+
+            circuit.xy(10, 25).addThree();
+            circuit.xy(23, 23).addThree();
+            circuit.xy(36, 21).addThree();
+            circuit.xy(49, 19).addThree();
+            circuit.xy(62, 17).addThree();
+
+            circuit.xy(36, 37).line([1, 2, -12]);
+            circuit.xy(23, 39).line([1, 4, -25]);
+
+            circuit.xy(49, 35).addThree();
+            circuit.xy(62, 33).addThree();
+
+            circuit.xy(75, 15).line([8]);
+            circuit.xy(75, 19).line([0, -2, 8]);
+            circuit.xy(75, 23).line([1, -4, 7]);
+            circuit.xy(75, 27).line([2, -6, 6]);
+            circuit.xy(75, 31).line([8]);
+            circuit.xy(75, 35).line([0, -2, 8]);
+            circuit.xy(75, 39).line([1, -4, 7]);
+            circuit.xy(75, 43).line([2, -6, 6]);
+            circuit.xy(75, 47).line([8]);
+            circuit.xy(62, 49).line([21]);
+          }
+        });
+      });
+    </script>
+    <p>上の変換回路には同じ形をした回路が7個斜めに配置されています。そのうちの1つを取り出したのが次の回路です。回路の左側は0から15までの4ビットカウンタで、右側では次の表のような処理をしています。5以上の場合に3を加算、4以下の場合はそのままです。</p>
+    <table>
+      <tr><th>入力</th><th>出力</th></tr>
+      <tr><td>0 ～ 4</td><td>入力値をそのまま出力</td></tr>
+      <tr><td>5 ～ 9</td><td>入力値に3加算した値を出力</td></tr>
+    </table>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          initialScale: 3,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([14, 1, 13, -19, 1, 20]);
+            circuit.xy( 4,  1).line([0, 2]);
+            circuit.xy( 0,  0).reverse();
+            circuit.xy(10,  0).reverse();
+
+            circuit.xy( 8,  4).counter(4);
+
+            for (let i = 0; i < 4; i++) {
+              circuit.xy(9, 5 + 4 * i).line([1]);
+            }
+
+            circuit.xy(10,  5).addThree();
+
+            for (let i = 0; i < 4; i++) {
+              circuit.xy(23, 7 + 4 * i).line([4]);
+            }
+          }
+        });
+      });
+    </script>
+    <p>この回路の処理内容をもう少し詳しく見てみると、次のようになります。この論理式を回路にしたものが上の回路です。10以上が入力されることはありませんので、10以上の入力に対する出力は考慮していません。</p>
+    <ul>
+      <li>Out1 = (!In1 and In4) or (In1 and !In3 and !In4) or (!In1 and In2 and In3)</li>
+      <li>Out2 = (!In1 and In4) or (In1 and In2) or (In2 and !In3)</li>
+      <li>Out3 = (In1 and In4) or (!In1 and !In2 and In3)</li>
+      <li>Out4 = (In1 and In3) or (In2 and In3) or In4</li>
+    </ul>
+    <table>
+      <tr><th colspan="5">入力</th><th colspan="5">出力</th></tr>
+      <tr><th>値</th><th>4桁目(8)</th><th>3桁目(4)</th><th>2桁目(2)</th><th>1桁目(1)</th><th>値</th><th>4桁目(8)</th><th>3桁目(4)</th><th>2桁目(2)</th><th>1桁目(1)</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+      <tr><td>2</td><td>0</td><td>0</td><td>1</td><td>0</td><td>2</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+      <tr><td>3</td><td>0</td><td>0</td><td>1</td><td>1</td><td>3</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+      <tr><td>4</td><td>0</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+      <tr><td>5</td><td>0</td><td>1</td><td>0</td><td>1</td><td>8</td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>6</td><td>0</td><td>1</td><td>1</td><td>0</td><td>9</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+      <tr><td>7</td><td>0</td><td>1</td><td>1</td><td>1</td><td>10</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+      <tr><td>8</td><td>1</td><td>0</td><td>0</td><td>0</td><td>11</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+      <tr><td>9</td><td>1</td><td>0</td><td>0</td><td>1</td><td>12</td><td>1</td><td>1</td><td>0</td><td>0</td></tr>
+    </table>
+    <p>この「5以上の場合に3を加算、4以下の場合はそのまま」を組み合わせることで2進数から2進化10進数に変換する方法は<strong>Double Dabble</strong>と呼ばれています。「<a href="https://qiita.com/suzuki-navi/items/dcd815d142355f9db2c3">2進数を10進数に変換するDouble Dabbleの説明を試みる</a>」の記事でDouble Dabbleの説明をしました。</p>
+    <p>最後に、2進化10進数への変換回路と7セグメントディスプレイを組み合わせたのが次の回路です。左上から下に向かって、クロックループ、<a href="counter2.html">値の設定が可能なカウンタ</a>、2進化10進数への変換回路が並び、右半分はこれまでの7セグメントディスプレイです。</p>
+    <div id="cellular-automaton-03"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-03",
+          initialScale: 4,
+          initialSpeed: 4,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([128, 1, 127, -29, 1, 30]);
+            circuit.xy(47, 1).reverse();
+            circuit.xy(37, 1).reverse();
+
+            circuit.xy(54,  1).line([0, 13, 6]);
+
+            circuit.xy(12,  4).text("SETボタンで数字を設定→");
+            for (let i = 0; i < 9; i++) {
+              const label = ["128", "64", "32", "16", "8", "4", "2", "1", "SET"][i];
+              circuit.xy(19 + 4 * i,  3).text(label);
+              circuit.xy(19 + 4 * i,  4).button(1);
+              circuit.xy(19 + 4 * i,  4).line([0, 2]);
+            }
+            circuit.xy(51,  6).line([0, 10, 2]);
+            circuit.xy(51,  7).line([-1]);
+
+            ((circuit) => {
+              circuit.xy( 2, 4).resetableCounter(8);
+
+              for (let i = 0; i < 8; i++) {
+                circuit.xy(9, 5 + 4 * i).line([1]);
+              }
+
+              circuit.xy(10,  5).line([5, 10, -60]);
+
+              circuit.xy(10,  9).line([4, 8, -48]);
+              circuit.xy(10, 13).line([3, 6, -36]);
+              circuit.xy(10, 17).line([2, 4, -24]);
+              circuit.xy(10, 21).line([1, 2, -12]);
+
+              circuit.xy(10, 25).addThree();
+              circuit.xy(23, 23).addThree();
+              circuit.xy(36, 21).addThree();
+              circuit.xy(49, 19).addThree();
+              circuit.xy(62, 17).addThree();
+
+              circuit.xy(36, 37).line([1, 2, -12]);
+              circuit.xy(23, 39).line([1, 4, -25]);
+
+              circuit.xy(49, 35).addThree();
+              circuit.xy(62, 33).addThree();
+
+              circuit.xy(62, 49).line([1, 2, -12]);
+
+              for (let i = 0; i < 10; i++) {
+                circuit.xy(75, 15 + 4 * i).line([1]);
+              }
+            })(circuit.xy(51, 8).rot(1));
+
+            circuit.xy(36, 84).line([0,  9, -72, -26]);
+            circuit.xy(32, 84).line([0, 10, -80, -27]);
+            circuit.xy(28, 84).line([0, 11, -88, -28]);
+            circuit.xy(24, 84).line([0, 12, -96, -29]);
+
+            circuit.xy(20, 84).line([0, 13, -64, -30]);
+            circuit.xy(16, 84).line([0, 14, -72, -31]);
+            circuit.xy(12, 84).line([0, 15, -80, -32]);
+            circuit.xy( 8, 84).line([0, 16, -88, -33]);
+
+            circuit.xy( 4, 84).line([0, 17, -56, -34]);
+            circuit.xy( 0, 84).line([0, 18, -64, -35]);
+
+            circuit.xy(64, 92).line([-5, 1]);
+            circuit.xy(60, 91).line([-5, 24]);
+
+            circuit.xy(64, 91).line([15, -24]);
+            circuit.xy(60, 90).line([5, 1]);
+            circuit.xy(84, 90).line([-5]);
+            circuit.xy(88, 89).line([-9]);
+            circuit.xy(92, 88).line([-13]);
+            circuit.xy(96, 87).line([-17]);
+
+            circuit.xy(103, 67).reverse();
+
+            for (let i = 0; i < 3; i++) {
+              circuit.xy(55 + 24 * i, 67).rot(3).sevenSegmentDisplaySelector();
+              circuit.xy(57 + 24 * i,  4).sevenSegmentDisplay();
+            }
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>

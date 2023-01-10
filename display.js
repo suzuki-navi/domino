@@ -174,5 +174,42 @@ circuitModules.push((Circuit) => {
     ]});
   }
 
+  Circuit.prototype.addThree = function () {
+    const circuit = this;
+
+    circuit.selector3(13, {input:[0, 4, 8, 12], output:[2, 6, 10, 14], series:[
+      {pos:[4, 3], cond:["in1", "out"]},
+      {pos:[8, 7], cond:["in1", "out"]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12,  5], cond:["in0", "in2", "in2", "in1", "out"]},
+      {skip:-1},
+      {pos:[5, 1], cond:["in1", "out"]},
+      {pos:[7, 10], cond:["in1", "out"]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12,  5], cond:["in1", "in1", "in2", "in2", "out"]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12,  1], cond:["in1", "in2", "in0", "in0", "out"]},
+      {pos:[0, 3, 7, 12,  9], cond:["in1", "in2", "in2", "in1", "out"], opts:[[], [], [], [], [], ["upper"]]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12,  1], cond:["in0", "in1", "in1", "in2", "out"], opts:[["reverse"]]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12,  5], cond:["in2", "in1", "in0", "in2", "out"], opts:[["reverse"]]},
+      {skip:-1},
+      {pos:[1, 2], cond:["in1", "out"]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12, 14], cond:["in1", "in2", "in1", "in2", "out"], opts:[["reverse"]]},
+      {pos:[0, 3,10, 12, 14], cond:["in2", "in1", "in1", "in2", "out"]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12, 14], cond:["in2", "in2", "in2", "in1", "out"]},
+      {skip:-1},
+      {pos:[0, 3, 7, 12,  9], cond:["in0", "in0", "in1", "in2", "out"]},
+      {skip:-1},
+      {pos:[5, 6], cond:["in1", "out"]},
+      {skip:-1},
+      {endOut:10},
+      {pos:[9, 10], cond:["in1", "out"]},
+    ]});
+  }
+
 });
 
