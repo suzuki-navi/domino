@@ -94,12 +94,12 @@ circuitModules.push((Circuit) => {
     const gridHeight = 4;
     let n = value;
     for (let i = 0; i < bitCount; i++) {
-      const cir = circuit.sub({x:0, y: i * gridHeight}, 0);
-      cir.sub({x: 4, y: -1}).line([-3]);
+      const cir = circuit.xy(0, i * gridHeight);
+      cir.xy(4, -1).line([-3]);
       cir.register(n % 2 == 1);
       n = n >> 1;
     }
-    circuit.sub({x: 4, y: -1}).line([0, gridHeight * (bitCount-1)]);
+    circuit.xy(4, -1).line([0, gridHeight * (bitCount-1)]);
   }
 
   Circuit.prototype.counter = function (bitCount) {

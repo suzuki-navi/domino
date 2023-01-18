@@ -211,5 +211,88 @@ circuitModules.push((Circuit) => {
     ]});
   }
 
+  Circuit.prototype.sevenSegmentDisplayThreeDigits = function () {
+    const circuit = this;
+
+      circuit.xy(64, 121).line([-63, 7]);
+      circuit.xy(64, 120).line([-62, 6]);
+      circuit.xy(64, 119).line([-61, 5]);
+      circuit.xy(64, 118).line([-60, 4]);
+      circuit.xy(64, 117).line([-27, 3]);
+      circuit.xy(64, 116).line([-9, 2]);
+      circuit.xy(64, 115).line([-5, 1]);
+      circuit.xy(64, 114).line([-1]);
+
+      circuit.xy( 1,114).line([0, -36]);
+      circuit.xy( 2,114).line([0, -23]);
+      circuit.xy( 3,114).line([0, -20, 17, -3]);
+      circuit.xy( 4,114).line([0, -3, 15]);
+      circuit.xy(37,114).line([0, -3]);
+      circuit.xy(55,114).line([0, -3]);
+      circuit.xy(59,114).line([0, -3]);
+      circuit.xy(63,114).line([0, -3]);
+
+
+      circuit.xy(19,111).rot(3).addThree();
+      circuit.xy(37,111).rot(3).addThree();
+      circuit.xy(55,111).rot(3).addThree();
+
+      circuit.xy(21, 98).line([0, -6, 3, -1]);
+      circuit.xy(25, 98).line([0, -6, 3, -1]);
+      circuit.xy(29, 98).line([0, -6, 3, -1]);
+      circuit.xy(33, 98).line([0, -4, 21, -3]);
+
+      circuit.xy(39, 98).line([-3, -15, 13, 2]);
+      circuit.xy(43, 98).line([0, -1, -8, -15, 8, 1]);
+      circuit.xy(47, 98).line([0, -2, -13, -15, 3]);
+      circuit.xy(51, 98).line([0, -3, 7, -4]);
+
+      circuit.xy(57, 98).line([-3, -15, 13, 2]);
+      circuit.xy(61, 98).line([0, -1, -8, -15, 8, 1]);
+      circuit.xy(65, 98).line([0, -2, -13, -15, 3]);
+      circuit.xy(69, 98).line([0, -3, -7, 4]);
+
+      circuit.xy( 2, 91).rot(3).addThree();
+      circuit.xy(20, 91).rot(3).addThree();
+      circuit.xy(36, 91).rot(3).addThree();
+      circuit.xy(54, 91).rot(3).addThree();
+
+      circuit.xy(22, 78).line([-3, -15, 13, 2]);
+      circuit.xy(26, 78).line([0, -1, -8, -15, 8, 1]);
+      circuit.xy(30, 78).line([0, -2, -13, -15, 3]);
+      circuit.xy(34, 78).line([1, 13, -1]);
+
+      circuit.xy(56, 78).line([-3, -15, 13, 2]);
+      circuit.xy(60, 78).line([0, -1, -8, -15, 8, 1]);
+      circuit.xy(64, 78).line([0, -2, -13, -15, 3]);
+
+      circuit.xy( 1, 78).line([0, -6, 50, -9]);
+      circuit.xy( 4, 78).line([0, -5, 51, -10]);
+      circuit.xy( 8, 78).line([0, -4, 51, -11]);
+      circuit.xy(12, 78).line([0, -3, 51, -12]);
+      circuit.xy(16, 78).line([0, -7, 11, -8]);
+      circuit.xy(38, 78).line([0, -1, -7, 14]);
+      circuit.xy(42, 78).line([0, -2, -7, 13]);
+      circuit.xy(46, 78).line([0, -7, -7, 8]);
+      circuit.xy(50, 78).line([0, -8, -47, 7]);
+      circuit.xy(68, 78).line([0, -9, -61, 6]);
+
+      circuit.xy( 7, 69).line([-5, 1]);
+      circuit.xy( 3, 68).line([-5, 5]);
+
+      circuit.xy( 7, 68).line([15, -5]);
+      circuit.xy( 3, 67).line([5, 1]);
+      circuit.xy(27, 67).line([-5]);
+      circuit.xy(31, 66).line([-9]);
+      circuit.xy(35, 65).line([-13]);
+      circuit.xy(39, 64).line([-17]);
+
+      circuit.xy(46, 63).reverse();
+
+      for (let i = 0; i < 3; i++) {
+        circuit.xy(-2 + 24 * i, 63).rot(3).sevenSegmentDisplaySelector();
+        circuit.xy(24 * i, 0).sevenSegmentDisplay();
+      }
+  }
 });
 

@@ -240,6 +240,49 @@
     </script>
   </section>
   <section>
+    <h2>後日追記</h2>
+    <p>今回の回路をあとで再利用しやすいように、7セグメントディスプレイの下にDouble Dabbleによる変換回路をつなげて再配置したものを作りました。(2023/01/18)</p>
+    <div id="cellular-automaton-04"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-04",
+          initialScale: 4,
+          initialSpeed: 4,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5",
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy( 0,  0).line([99, 1, 98, -90, 1, 91]);
+            circuit.xy(13, 1).reverse();
+            circuit.xy( 3, 1).reverse();
+
+            circuit.xy(14,  1).line([0, 10]);
+
+            circuit.xy(3, 41).text("SETボタンで数字を設定→");
+            for (let i = 0; i < 9; i++) {
+              const label = ["128", "64", "32", "16", "8", "4", "2", "1", "SET"][i];
+              circuit.xy(4, 39 - 4 * i).text(label);
+              circuit.xy(4, 40 - 4 * i).button(1);
+              circuit.xy(4, 40 - 4 * i).line([2]);
+            }
+            circuit.xy(6,  8).line([10, 2]);
+            circuit.xy(7,  8).line([0, 1]);
+
+            circuit.xy(10, 12).resetableCounter(8);
+
+            for (let i = 0; i < 8; i++) {
+                circuit.xy(17, 13 + 4 * i).line([8 - i, 112 - 3 * i, -(69 + 2 * i), -(1 + 2 * i), -(1 + i)]);
+            }
+
+            circuit.xy(29,  3).sevenSegmentDisplayThreeDigits();
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
     <p><a href="./">連載目次に戻る</a></p>
   </section>
 </body>

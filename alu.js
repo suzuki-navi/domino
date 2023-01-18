@@ -76,5 +76,16 @@ circuitModules.push((Circuit) => {
     circuit.sub({x:3, y:2}).line([0, 4, 1]);
     circuit.sub({x:2, y:5}).line([0, 1]);
   }
+
+  Circuit.prototype.adderChip = function (bitCount) {
+    const circuit = this;
+    const gridHeight = 3;
+    circuit.halfAdder1a();
+    circuit.xy(4, 2).line([4]);
+    circuit.xy(3, 2).line([0, 1, -3]);
+    for (let i = 1; i < bitCount; i++) {
+      circuit.xy(0, gridHeight * i).fullAdder1();
+    }
+  }
 });
 
