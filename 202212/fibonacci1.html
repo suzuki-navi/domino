@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>フィボナッチ数列 その1 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="フィボナッチ数列 その1"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/fibonacci1.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/fibonacci1_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<script src="../alu.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>フィボナッチ数列 その1</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の17本目です。(2023/01/19)</p>
+    <p>これまではCPUのパーツとなる回路を作成してきましたが、これからはそれらをつないでいき、少しずつCPUに近づけていきます。</p>
+    <p>今回の回路はフィボナッチ数列を順番に表示していく回路です。フィボナッチ数列は次の式で表される数列で、0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ... と続きます。</p>
+    <!-- p>$$
+      F_n = \left\{
+      \begin{array}{}
+      \begin{align}
+      & 0 & (x = 0) \\
+      & 1 & (x = 1) \\
+      & F_{n-2} + F_{n-1} & (x \geq 2) \\
+      \end{align}
+      \end{array}
+      \right.
+    $$</p -->
+    <p class="mathjax">$$
+      \begin{align}
+      F_0 &= 0 \\
+      F_1 &= 1 \\
+      F_{n+2} &= F_n + F_{n+1} \hspace{10pt} (n \geq 0)
+      \end{align}
+    $$</p>
+    <p>回路の一番上はシグナルを供給するループです。左には8ビットの<a href="register.html">レジスタ</a>が2列並んでいます。レジスタは上からシグナルが来るごとに左からの入力で値が上書きされます。シグナルは2つのレジスタで別々ですが、入力は共通です。レジスタの右には8ビットの<a href="adder.html">加算回路</a>があります。加算器は2つのレジスタの値を加算した結果を右に出力しています。出力された結果は下を回り込み、レジスタの左からの入力になります。シグナルが来るごとに加算結果をレジスタに保存し直すことになります。右半分は加算結果を表示するディスプレイです。</p>
+    <p>面積でいえばディスプレイが半分以上を占めますが、この回路の要は加算回路と2つのレジスタです。2つのレジスタに交互にシグナルを供給することで加算結果を交互にレジスタに保存し、フィボナッチ数列を計算できるようになっています。</p>
+    <p>この回路をCPUだとみなしたとき（まだまだCPUにはほど遠いのですが）、演算は加算のみで、レジスタは2つあり、命令は加算結果をどちらのレジスタに保存するかの2択のみで、2つの命令を交互に実行しているとみなせます。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      circuitModules.push((Circuit) => {
+        Circuit.prototype.registerChip2 = function (bitCount, value1) {
+          const circuit = this;
+          const gridHeight = 8;
+          let n1 = value1;
+          for (let i = 0; i < bitCount; i++) {
+            const cir = circuit.xy(0, i * gridHeight);
+            cir.xy(4, -1).line([-3]);
+            cir.xy(0, 0).register(n1 % 2 == 1);
+            n1 = n1 >> 1;
+          }
+          circuit.xy(4, -1).line([0, gridHeight * (bitCount-1)]);
+        }
+      });
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          initialScale: 5,
+          initialSpeed: 4,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5",
+          ],
+          circuitWriter: (circuit) => {
+              const timeLineWidth = 150;
+              circuit.xy(0, 0).line([timeLineWidth, 1, timeLineWidth - 1, -1, -(timeLineWidth - 1), 1, timeLineWidth, 3]);
+              circuit.xy(0, 0).reverse();
+              circuit.xy(10, 0).reverse();
+
+              circuit.xy(14, 3).line([0, 11]);
+              circuit.xy(20, 1).line([0, 17]);
+              circuit.xy(10, 15).registerChip2(8, 1);
+              circuit.xy(16, 19).registerChip2(8, 0);
+
+              circuit.xy(13, 16).line([9, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 2, -1]);
+              circuit.xy(19, 20).line([3, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1]);
+              circuit.xy(13, 24).line([9, 3, -1, 3, -1, 3, -1, 3, -1, 3, -3]);
+              circuit.xy(19, 28).line([3, 3, -1, 3, -1, 3, -1, 3, -1, 1, -2]);
+              circuit.xy(13, 32).line([9, 3, -1, 3, -1, 3, -1, 1, -4]);
+              circuit.xy(19, 36).line([3, 3, -1, 3, -1, 2, -4]);
+              circuit.xy(13, 40).line([9, 3, -1, 2, -6]);
+              circuit.xy(19, 44).line([3, 3, -6]);
+              circuit.xy(13, 48).line([16]);
+              circuit.xy(19, 52).line([3, -2, 6]);
+              circuit.xy(13, 56).line([9, -3, 1, -2, 6]);
+              circuit.xy(19, 60).line([3, -3, 1, -3, 1, -1, 4]);
+              circuit.xy(13, 64).line([9, -3, 1, -3, 1, -3, 1, -1, 4]);
+              circuit.xy(19, 68).line([3, -3, 1, -3, 1, -3, 1, -3, 3]);
+              circuit.xy(13, 72).line([9, -3, 1, -3, 1, -3, 1, -3, 1, -3, 3]);
+              circuit.xy(19, 76).line([3, -3, 1, -3, 1, -3, 1, -3, 1, -3, 1, -2, 1]);
+
+              circuit.xy(28, 36).adderChip(8);
+
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(36, 38 + 3 * i).line([8 - i, 99 - 2 * i, -(69 + 2 * i), -(2 + 2 * i), -(1 + i)]);
+                  circuit.xy(44 - i, 85 - i).line([-(43 - 2 * i), 66 - 9 * i, 14 - i]);
+                  circuit.xy(8, 19 + 8 * i).line([0, -4, 1]);
+              }
+
+              circuit.xy(48, 14).sevenSegmentDisplayThreeDigits();
+          }
+        });
+      });
+    </script>
+    <p>レジスタも加算器も8ビットですので、8ビットを超える整数になるとオーバーフローを起こし、フィボナッチ数列とは関係ない数字を表示し始めます。</p>
+    <p>この回路を今後CPUに近づけていこうと思います。</p>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</body>
+</html>

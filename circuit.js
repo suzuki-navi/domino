@@ -102,15 +102,16 @@ circuitModules.push((Circuit) => {
     circuit.xy(4, -1).line([0, gridHeight * (bitCount-1)]);
   }
 
-  Circuit.prototype.counter = function (bitCount) {
+  Circuit.prototype.counter = function (bitCount, value = 0) {
     const circuit = this;
     const gridHeight = 4;
+    let n = value;
     for (let i = 0; i < bitCount; i++) {
       const cir = circuit.xy(0, i * gridHeight);
       cir.xy(-4, -1).line([3]);
-      cir.xy(0, 0).flip().register();
+      cir.xy(0, 0).flip().register(n % 2 == 1);
       cir.xy(0, 2).line([1, -2]);
-        cir.xy(1, 0).reverse();
+      cir.xy(1, 0).reverse();
       if (i > 0) {
         cir.xy(-4, -5).line([0, 4]);
         cir.xy(-3, -3).line([-2, -1, -1]);
@@ -118,6 +119,7 @@ circuitModules.push((Circuit) => {
         cir.xy(-4, -4).reverse();
         cir.xy(-4, -2).reverse();
       }
+      n = n >> 1;
     }
   }
 
@@ -155,9 +157,9 @@ circuitModules.push((Circuit) => {
     circuit.xy(-6, 2).reverse();
   }
 
-  Circuit.prototype.resetableCounter = function (bitCount) {
+  Circuit.prototype.resetableCounter = function (bitCount, value = 0) {
     const circuit = this;
-    circuit.flip().counter(bitCount);
+    circuit.flip().counter(bitCount, value);
 
     const gridHeight = 4;
     for (let i = 0; i < bitCount; i++) {
