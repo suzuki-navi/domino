@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>フィボナッチ数列 その2 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="フィボナッチ数列 その2"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/fibonacci2-7.html"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<script src="../alu.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <div id="cellular-automaton-01" class="full-screen"></div>
+    <script>
+      circuitModules.push((Circuit) => {
+        Circuit.prototype.registerChip2 = function (bitCount, value1) {
+          const circuit = this;
+          const gridHeight = 8;
+          let n1 = value1;
+          for (let i = 0; i < bitCount; i++) {
+            const cir = circuit.xy(0, i * gridHeight);
+            cir.xy(4, -1).line([-3]);
+            cir.xy(0, 0).register(n1 % 2 == 1);
+            n1 = n1 >> 1;
+          }
+          circuit.xy(4, -1).line([0, gridHeight * (bitCount-1)]);
+        }
+      });
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          initialScale: 5,
+          initialSpeed: 4,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5",
+            "zoom",
+          ],
+          circuitWriter: (circuit) => {
+              // ループ
+              circuit.xy(-5, -32).line([101, 1, 100, -1]);
+              circuit.xy(-5, -32).reverse();
+              circuit.xy(5, -32).reverse();
+              circuit.xy(-5, -30).line([101, 1, 101, 1]);
+              circuit.xy(1, -29).line([0, 7]);
+
+              // カウンタとデコーダ
+              circuit.xy(-3, -21).resetableCounter(4, 0);
+              for (let i = 0; i < 4; i++) {
+                  circuit.xy(4, -20 + 4 * i).line([17]);
+              }
+              circuit.xy(5, -20).selector1({bitCount:4, start:0, end:9, inputInterval:4});
+
+              // ジャンプコード
+              circuit.xy(31,  7).line([0, -10, -16]);
+              circuit.xy( 6, -7).line([0, 15]);
+              circuit.xy(14, -7).line([0, 15]);
+              circuit.xy(18, -7).line([0, 15]);
+              circuit.xy(22, -7).line([0, 15]);
+              circuit.xy(15, -3).line([0, 2, 1]);
+              circuit.xy(14, -1).reverse();
+              circuit.xy(15, -1).reverse(true);
+              circuit.xy(14, -2).reverse(true);
+              circuit.xy(19, -3).line([0, 2, 1]);
+              circuit.xy(18, -1).reverse();
+              circuit.xy(19, -1).reverse(true);
+              circuit.xy(18, -2).reverse(true);
+              circuit.xy(21,  1).line([-28, 10]);
+              circuit.xy(21,  3).line([-29, 16, 1]);
+              circuit.xy(21,  5).line([-30, 22, 2]);
+              circuit.xy(21,  7).line([-31, 28, 3]);
+              circuit.xy(21,  9).line([-32, 33, 14, 1]);
+              circuit.xy( 6,  2).line([-1, -1]);
+              circuit.xy(22,  2).line([-1, -1]);
+              circuit.xy(14,  6).line([-1, -1]);
+              circuit.xy(18,  6).line([-1, -1]);
+              circuit.xy( 6,  8).line([-1, -1]);
+              circuit.xy(14,  8).line([-1, -1]);
+              circuit.xy(18,  8).line([-1, -1]);
+              circuit.xy(22,  8).line([-1, -1]);
+
+              circuit.xy( 8, -7).line([0, 3, -44, 28]);
+              circuit.xy(12, -7).line([0, 2, -41, 33, 1]);
+              circuit.xy(36, -4).line([0, 27]);
+              circuit.xy(35, -5).line([0, 2, -1]);
+              circuit.xy(27, -7).line([11, 6, 2]);
+              circuit.xy(38, -7).line([2, 2]);
+              circuit.xy(38, -2).line([2, -2]);
+              circuit.xy(36, -1).reverse();
+              circuit.xy(37, -1).reverse(true);
+              circuit.xy(36, -2).reverse(true);
+              circuit.xy(40, -5).reverse();
+              circuit.xy(39, -5).reverse(true);
+              circuit.xy(40, -6).reverse(true);
+              circuit.xy(40, -4).reverse();
+              circuit.xy(39, -4).reverse(true);
+              circuit.xy(40, -3).reverse(true);
+
+              circuit.xy(27, -30).line([0, 43, 13]);
+              circuit.xy(14, 13).reverse();
+              circuit.xy(15, 13).reverse(true);
+              circuit.xy(14, 12).reverse(true);
+              circuit.xy(27, 12).line([-7]);
+              circuit.xy(20, 12).reverse();
+              circuit.xy(21, 12).reverse(true);
+              circuit.xy(20, 11).reverse(true);
+
+              circuit.xy(10, -7).line([0, 18, -10]);
+              circuit.xy(10, 11).line([0, 1, -4]);
+              circuit.xy(16, -7).line([0, 17, 2, -4]);
+              circuit.xy(20, -7).line([0, 25]);
+
+              circuit.xy(10, 15).registerChip2(8, 1);
+              circuit.xy(16, 19).registerChip2(8, 0);
+
+              circuit.xy(13, 16).line([9, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 2, -1]);
+              circuit.xy(19, 20).line([3, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1]);
+              circuit.xy(13, 24).line([9, 3, -1, 3, -1, 3, -1, 3, -1, 3, -3]);
+              circuit.xy(19, 28).line([3, 3, -1, 3, -1, 3, -1, 3, -1, 1, -2]);
+              circuit.xy(13, 32).line([9, 3, -1, 3, -1, 3, -1, 1, -4]);
+              circuit.xy(19, 36).line([3, 3, -1, 3, -1, 2, -4]);
+              circuit.xy(13, 40).line([9, 3, -1, 2, -6]);
+              circuit.xy(19, 44).line([3, 3, -6]);
+              circuit.xy(13, 48).line([16]);
+              circuit.xy(19, 52).line([3, -2, 6]);
+              circuit.xy(13, 56).line([9, -3, 1, -2, 6]);
+              circuit.xy(19, 60).line([3, -3, 1, -3, 1, -1, 4]);
+              circuit.xy(13, 64).line([9, -3, 1, -3, 1, -3, 1, -1, 4]);
+              circuit.xy(19, 68).line([3, -3, 1, -3, 1, -3, 1, -3, 3]);
+              circuit.xy(13, 72).line([9, -3, 1, -3, 1, -3, 1, -3, 1, -3, 3]);
+              circuit.xy(19, 76).line([3, -3, 1, -3, 1, -3, 1, -3, 1, -3, 1, -2, 1]);
+
+              circuit.xy(28, 36).adderChip(8, 0);
+
+              circuit.xy(20, 14).line([1, 1]);
+              circuit.xy(14, 15).line([37, 73, 16]);
+              circuit.xy(31, 89).registerChip(8);
+
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(47 - i, 35).line([0, 51]);
+              }
+
+              // 出力制御
+              circuit.xy(36, 23).line([0, 6]);
+              for (let i = 0; i < 2; i++) {
+                  circuit.xy(52, 24 + 4 * i).line([-22]);
+
+                  circuit.xy(32, 26 + 4 * i).line([5]);
+
+                  // リセット
+                  circuit.xy(34, 26 + 4 * i).line([0, -2]);
+                  circuit.xy(36, 25 + 4 * i).line([-2]);
+                  circuit.xy(34, 25 + 4 * i).reverse();
+                  circuit.xy(35, 25 + 4 * i).reverse(true);
+                  circuit.xy(34, 26 + 4 * i).reverse(true);
+                  circuit.xy(35, 26 + 4 * i).reverse();
+
+                  circuit.xy(29, 25 + 4 * i).register(i == 1);
+                  circuit.xy(29, 27 + 4 * i).line([-1, 2]);
+                  circuit.xy(28, 25 + 4 * i).reverse();
+              }
+              circuit.xy(37, 26).line([10, 9]);
+              circuit.xy(37, 30).line([1, 28]);
+
+              // 加算器の結果出力
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(36, 38 + 3 * i).line([11 - i]);
+                  circuit.xy(38, 37 + 3 * i).line([1, 1]);
+                  circuit.xy(39, 38 + 3 * i).reverse();
+                  circuit.xy(39, 37 + 3 * i).reverse(true);
+                  circuit.xy(37, 38 + 3 * i).reverse();
+              }
+
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(47 - i, 85 - i).line([-(46 - 2 * i), 66 - 9 * i, 14 - i]);
+                  circuit.xy(8, 19 + 8 * i).line([0, -4, 1]);
+                  circuit.xy(16 - i, 85 - i).line([0, 4 + 5 * i, -(14 + i)]);
+                  circuit.xy(34, 90 + 4 * i).line([10 - i, 47 - 3 * i, -(85 + 2 * i), -(2 + 2 * i), -(1 + i)]);
+              }
+
+              // オーバーフローの時に1にリセットする回路
+              circuit.xy(34, 60).line([15, -53, -18]);
+
+              circuit.xy(64, 14).sevenSegmentDisplayThreeDigits();
+          }
+        });
+      });
+    </script>
+  </section>
+</body>
+</body>
+</html>

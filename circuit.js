@@ -89,6 +89,13 @@ circuitModules.push((Circuit) => {
     }
   }
 
+  Circuit.prototype.registerToggle = function (value=false) {
+    const circuit = this;
+    circuit.register(value);
+    circuit.xy(0, 2).line([-1, 2]);
+    circuit.xy(-1, 0).reverse();
+  }
+
   Circuit.prototype.registerChip = function (bitCount, value) {
     const circuit = this;
     const gridHeight = 4;

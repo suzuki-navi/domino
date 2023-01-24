@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>フィボナッチ数列 その2 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="フィボナッチ数列 その2"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/fibonacci2-8.html"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<script src="../alu.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <div id="cellular-automaton-01" class="full-screen"></div>
+    <script>
+      circuitModules.push((Circuit) => {
+        Circuit.prototype.registerChip2 = function (bitCount, value1) {
+          const circuit = this;
+          const gridHeight = 8;
+          let n1 = value1;
+          for (let i = 0; i < bitCount; i++) {
+            const cir = circuit.xy(0, i * gridHeight);
+            cir.xy(4, -1).line([-3]);
+            cir.xy(0, 0).register(n1 % 2 == 1);
+            n1 = n1 >> 1;
+          }
+          circuit.xy(4, -1).line([0, gridHeight * (bitCount-1)]);
+        }
+
+          Circuit.prototype.programCounter = function (bitCount, endValue) {
+              const circuit = this;
+              circuit.resetableCounter(bitCount, 0);
+              for (let i = 0; i < bitCount; i++) {
+                  circuit.xy(7, 1 + 4 * i).line([-1 + 2 * endValue]);
+              }
+              circuit.xy(8, 1).selector1({bitCount, start:0, end:endValue, inputInterval:4});
+              circuit.xy(-3, -3).line([9, 1]);
+          }
+
+          Circuit.prototype.programCounter2 = function (bitCount, codeList) {
+              const circuit = this;
+
+              while (codeList.length < 8) {
+                  codeList.push({cond: null, go: null, op: null});
+              }
+              const len = codeList.length;
+
+              circuit.xy(4, -6).line([0, 2]);
+              circuit.programCounter(bitCount, len, 10);
+
+              // signal
+              const signalDelta = 15;
+              circuit.xy(4, -4).line([0, 3]);
+              circuit.xy(4, -2).line([3, 1, -signalDelta, 1, signalDelta, -(-5 + 4 * bitCount), -(2 + 2 * len), 12 + 2 * bitCount, -1, 3]);
+              circuit.xy(26, -2).line([-10, -1]);
+              circuit.xy(26, -2).reverse();
+              circuit.xy(16, -2).reverse();
+              circuit.xy(9 + 2 * len, -4 + 4 * bitCount).line([-(3 + 2 * len), -(11 + 2 * bitCount)]);
+
+              for (let i = 0; i < len; i++) {
+                  const c = codeList[i];
+                  let lineLen = 2; // 10 + 2 * bitCount;
+                  if (c.cond != null) {
+                      lineLen = 3;
+                  } else if (c.go != null) {
+                      lineLen = 5 + 2 * bitCount;
+                  } else if (c.op == "loadFlag") {
+                      lineLen = 8 + 2 * bitCount;
+                  } else if (c.op != null) {
+                      lineLen = 13 + 2 * bitCount + c.op;
+                  }
+                  circuit.xy(9 + 2 * i, -2 + 4 * bitCount).line([0, lineLen]);
+              }
+
+              let baseY = 2 + 4 * bitCount;
+
+              circuit.xy(8, -3 + baseY).line([-2 + 2 * len]);
+              circuit.xy(8, -3 + baseY).text("cond");
+              circuit.xy(10, 0 + baseY).line([-2 + 2 * len]);
+              circuit.xy(8 + 2 * len, 0 + baseY).text("skip");
+              for (let i = 0; i < len; i++) {
+                  const c = codeList[i];
+
+                  if (c.cond == null) {
+                      continue;
+                  }
+                  circuit.xy(8 + 2 * i, -3 + baseY).line([0, 2, -2, 1]);
+                  circuit.xy(9 + 2 * i, -1 + baseY).reverse();
+                  circuit.xy(9 + 2 * i, -2 + baseY).reverse(true);
+                  if (c.cond == false) {
+                      // nothing
+                  } else if (c.cond == true) {
+                      circuit.xy(8 + 2 * i, -1 + baseY).reverse(true);
+                  }
+              }
+
+              // skip
+              circuit.xy( 9, -4).registerToggle();
+              circuit.xy( 8 + 2 * len, baseY).line([0, -(7 + 4 * bitCount), -(-2 + 2 * len)]);
+              circuit.xy(12, -3).line([3, 2]);
+              circuit.xy(13, -3).line([0, 1, -1]);
+              circuit.xy(14, -1).line([0, -5, -10]);
+              circuit.xy(10, -6).line([0, 1]);
+              circuit.xy(13, -2).reverse(true);
+              circuit.xy(14, -2).reverse();
+              circuit.xy(14, -1).reverse(true);
+              circuit.xy(15, -1).reverse();
+              circuit.xy( 9 + 2 * len, -1 + baseY).line([-1]);
+              circuit.xy( 8 + 2 * len, -1 + baseY).reverse();
+              circuit.xy( 8 + 2 * len,  0 + baseY).reverse(true);
+              circuit.xy( 9 + 2 * len, -1 + baseY).reverse(true);
+              circuit.xy( 9 + 2 * len,  0 + baseY).reverse();
+
+              // goto code
+              for (let i = 0; i < bitCount; i++) {
+                  circuit.xy(6 + 2 * len, 2 + baseY + 2 * i).line([-(10 + 2 * len + i), 8 + 6 * i, i]);
+              }
+              circuit.xy(6 + 2 * len, 2 + baseY + 2 * bitCount).line([-(10 + 2 * len + bitCount), 8 + 6 * bitCount, bitCount]);
+              circuit.xy(-4, -4).line([0, 1, -1]);
+              circuit.xy(6, 4 + baseY + 2 * bitCount).line([-(11 + bitCount), 11 + 6 * bitCount, 9 + bitCount]);
+              for (let i = 0; i < len; i++) {
+                  const c = codeList[i];
+                  if (c.go == null) continue;
+                  let n = c.go * 2 + 1;
+                  for (let j = 0; j <= bitCount; j++) {
+                      if (n % 2 != 0) {
+                          circuit.xy(9 + 2 * i, 1 + baseY + 2 * (bitCount - j)).line([-1, -1]);
+                      }
+                      n = n >> 1;
+                  }
+              }
+
+              baseY = 3 + baseY + 2 * bitCount;
+
+              // condition bit register
+              circuit.xy(0, 4 * bitCount).register();
+              circuit.xy(3, 1 + 4 * bitCount).line([4, -2, 1]);
+              circuit.xy(10, 2 + baseY).line([-2 + 2 * len, -2]);
+              circuit.xy(9 + 2 * len,  0 + baseY).line([-(4 + 2 * len), 6 + 2 * bitCount, -4]);
+              circuit.xy(8 + 2 * len,  0 + baseY).reverse();
+              circuit.xy(9 + 2 * len,  0 + baseY).reverse(true);
+              circuit.xy(8 + 2 * len,  1 + baseY).reverse(true);
+              circuit.xy(9 + 2 * len,  1 + baseY).reverse();
+              for (let i = 0; i < len; i++) {
+                  const c = codeList[i];
+                  if (c.op != "loadFlag") continue;
+                  circuit.xy(9 + 2 * i,  1 + baseY).line([1, 1]);
+              }
+
+              baseY = 3 + baseY;
+
+              // operator
+              circuit.xy(10, 2 + baseY).line([-1 + 2 * len, -2, -(5 + 2 * len), 2]);
+              circuit.xy( 9 + 2 * len, 2 + baseY).line([1]);
+              circuit.xy( 9 + 2 * len, 2 + baseY).reverse(true);
+              circuit.xy(10 + 2 * len, 1 + baseY).reverse(true);
+              circuit.xy( 9 + 2 * len, 1 + baseY).reverse();
+              circuit.xy(4, -2 + baseY).reverse();
+              circuit.xy(5, -2 + baseY).reverse(true);
+              let maxOp = 0;
+              for (let i = 0; i < len; i++) {
+                  const c = codeList[i];
+                  if (c.op == null || c.op == "loadFlag") continue;
+                  circuit.xy(9 + 2 * i,  1 + baseY).line([1, 1]);
+                  if (c.op > maxOp) {
+                      maxOp = c.op;
+                  }
+              }
+              circuit.xy(10 + 2 * len, 2 + baseY).line([maxOp]);
+              for (let i = 0; i <= maxOp; i++) {
+                  circuit.xy(8, 3 + baseY + i).line([3 + 2 * len + maxOp]);
+                  circuit.xy(10 + 2 * len + i, 2 + baseY).line([0, 1 + i]);
+                  circuit.xy(10 + 2 * len + i, 3 + baseY + i).reverse();
+                  circuit.xy( 9 + 2 * len + i, 3 + baseY + i).reverse(true);
+              }
+
+              circuit.xy(-1, baseY).line([0, -(baseY - 4 * bitCount)]);
+          }
+      });
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          initialScale: 4,
+          initialSpeed: 4,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4", "speed5",
+            "zoom",
+          ],
+          circuitWriter: (circuit) => {
+
+              let codeList = [
+                  {cond: null, go: 7, op: null}, // goto 7
+                  {cond: null, go: null, op: 1}, // 出力制御0と1にシグナルを流す
+                  {cond: null, go: null, op: 6}, // レジスタAとBとCにシグナルを流す
+                  {cond: null, go: null, op: 2}, // 出力制御0と2にシグナルを流す
+                  {cond: null, go: null, op: "loadFlag"}, // フラグレジスタにシグナルを流す
+                  {cond: false, go: null, op: null}, // 条件ビットが立ってなければ次をスキップ
+                  {cond: null, go: 1, op: null}, // goto 1
+                  {cond: null, go: null, op: 4}, // レジスタAとCにシグナルを流す
+                  {cond: null, go: null, op: "loadFlag"}, // フラグレジスタにシグナルを流す
+                  {cond: false, go: null, op: null}, // 条件ビットが立ってなければ次をスキップ
+                  {cond: null, go: 1, op: null}, // goto 1
+                  {cond: null, go: null, op: 5}, // レジスタBとCにシグナルを流す
+                  {cond: null, go: 4, op: null}, // goto 4
+              ];
+              while (codeList.length < 20) {
+                  codeList.push({cond: null, go: null, op: null});
+              }
+              circuit.xy(11, -48).programCounter2(5, codeList);
+
+              circuit.xy(68, -6).line([4, 13, 20, -13, 15, -3, -15, 1]);
+              circuit.xy(68, -5).line([3, 13, 18, -13, 15, -1, -15, 6, 1]);
+              circuit.xy(53, 19).line([-17, -4]);
+              circuit.xy(52, 18).line([-1, -1]);
+              circuit.xy(36, 19).line([-10, 13, -16]);
+
+              circuit.xy(68, -3).line([2, 6, 45, -6, 3]);
+              circuit.xy(68, -2).line([1, 4, 34, 2, -1, -2, 10, -6, 2]);
+              circuit.xy(68, -1).line([1]);
+              circuit.xy(68, -1).line([0, 1, -2]);
+              circuit.xy(22,  8).line([-12]);
+              circuit.xy(22,  9).line([-12]);
+              circuit.xy(20,  8).line([0, 10]);
+              circuit.xy(14,  9).line([0, 5]);
+              circuit.xy(10,  9).line([0, -10, -10, 54, 15, 1]);
+              circuit.xy(48,  2).line([0, 2, -1, 84, 14]);
+              circuit.xy(50,  3).line([0, 2, 1]);
+
+              circuit.xy(34, 60).line([14, -55, -34, 10, -4, 5]);
+
+              circuit.xy(10, 15).registerChip2(8, 1);
+              circuit.xy(16, 19).registerChip2(8, 0);
+
+              circuit.xy(13, 16).line([9, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 2, -1]);
+              circuit.xy(19, 20).line([3, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1, 3, -1]);
+              circuit.xy(13, 24).line([9, 3, -1, 3, -1, 3, -1, 3, -1, 3, -3]);
+              circuit.xy(19, 28).line([3, 3, -1, 3, -1, 3, -1, 3, -1, 1, -2]);
+              circuit.xy(13, 32).line([9, 3, -1, 3, -1, 3, -1, 1, -4]);
+              circuit.xy(19, 36).line([3, 3, -1, 3, -1, 2, -4]);
+              circuit.xy(13, 40).line([9, 3, -1, 2, -6]);
+              circuit.xy(19, 44).line([3, 3, -6]);
+              circuit.xy(13, 48).line([16]);
+              circuit.xy(19, 52).line([3, -2, 6]);
+              circuit.xy(13, 56).line([9, -3, 1, -2, 6]);
+              circuit.xy(19, 60).line([3, -3, 1, -3, 1, -1, 4]);
+              circuit.xy(13, 64).line([9, -3, 1, -3, 1, -3, 1, -1, 4]);
+              circuit.xy(19, 68).line([3, -3, 1, -3, 1, -3, 1, -3, 3]);
+              circuit.xy(13, 72).line([9, -3, 1, -3, 1, -3, 1, -3, 1, -3, 3]);
+              circuit.xy(19, 76).line([3, -3, 1, -3, 1, -3, 1, -3, 1, -3, 1, -2, 1]);
+
+              circuit.xy(28, 36).adderChip(8, 0);
+
+              /*
+              circuit.xy(20, 14).line([1, 1]);
+              circuit.xy(14, 15).line([37, 73, 16]);
+              */
+              circuit.xy(31, 89).registerChip(8);
+
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(47 - i, 35).line([0, 51]);
+              }
+
+              // 出力制御
+              circuit.xy(36, 23).line([0, 6]);
+              for (let i = 0; i < 2; i++) {
+                  circuit.xy(52, 24 + 4 * i).line([-22]);
+
+                  circuit.xy(32, 26 + 4 * i).line([5]);
+
+                  // リセット
+                  circuit.xy(34, 26 + 4 * i).line([0, -2]);
+                  circuit.xy(36, 25 + 4 * i).line([-2]);
+                  circuit.xy(34, 25 + 4 * i).reverse();
+                  circuit.xy(35, 25 + 4 * i).reverse(true);
+                  circuit.xy(34, 26 + 4 * i).reverse(true);
+                  circuit.xy(35, 26 + 4 * i).reverse();
+
+                  circuit.xy(29, 25 + 4 * i).register(i == 1);
+                  circuit.xy(29, 27 + 4 * i).line([-1, 2]);
+                  circuit.xy(28, 25 + 4 * i).reverse();
+              }
+              circuit.xy(37, 26).line([10, 9]);
+              circuit.xy(37, 30).line([1, 28]);
+
+              // 加算器の結果出力
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(36, 38 + 3 * i).line([11 - i]);
+                  circuit.xy(38, 37 + 3 * i).line([1, 1]);
+                  circuit.xy(39, 38 + 3 * i).reverse();
+                  circuit.xy(39, 37 + 3 * i).reverse(true);
+                  circuit.xy(37, 38 + 3 * i).reverse();
+              }
+
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(47 - i, 85 - i).line([-(46 - 2 * i), 66 - 9 * i, 14 - i]);
+                  circuit.xy(8, 19 + 8 * i).line([0, -4, 1]);
+                  circuit.xy(16 - i, 85 - i).line([0, 4 + 5 * i, -(14 + i)]);
+                  circuit.xy(34, 90 + 4 * i).line([10 - i, 47 - 3 * i, -(85 + 2 * i), -(2 + 2 * i), -(1 + i)]);
+              }
+
+              circuit.xy(64, 14).sevenSegmentDisplayThreeDigits();
+
+          }
+        });
+      });
+    </script>
+  </section>
+</body>
+</body>
+</html>
