@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>読み取り専用メモリ | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="読み取り専用のメモリ"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/rom.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/rom_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<script src="../display.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>読み取り専用メモリ</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の19本目です。(2023/01/26)</p>
+    <p>今回の回路は読み取り専用のメモリ（ROM）です。入力をアドレスとみなしてそのアドレスに入っている値を出力します。値を書き換えることはできず、回路に値がハードコーディングされています。デコーダの組み合わせで実現できます。格子状の回路の上半分がデコーダになっており、下半分が値が書き込まれているエリアです。</p>
+    <p>下のサンプル回路は入力が0から12までだった場合に書き込まれている値を出力します。13以上の入力では値がなくて0を出力します。左のボタンでアドレスを設定できます。アドレスに応じて右から数値が出力されます。</p>
+    <table>
+      <tr><th>入力(アドレス)</th><th>出力(保存されている値)</th></tr>
+      <tr><td>0</td><td>0</td></tr>
+      <tr><td>1</td><td>1</td></tr>
+      <tr><td>2</td><td>2</td></tr>
+      <tr><td>3</td><td>3</td></tr>
+      <tr><td>4</td><td>5</td></tr>
+      <tr><td>5</td><td>8</td></tr>
+      <tr><td>6</td><td>13</td></tr>
+      <tr><td>7</td><td>21</td></tr>
+      <tr><td>8</td><td>34</td></tr>
+      <tr><td>9</td><td>55</td></tr>
+      <tr><td>10</td><td>89</td></tr>
+      <tr><td>11</td><td>144</td></tr>
+      <tr><td>12</td><td>233</td></tr>
+    </table>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 41,
+          worldHeight: 34,
+          initialScale: 3,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+          ],
+          circuitWriter: (circuit) => {
+            let n = 1;
+            for (let i = 0; i < 8; i++) {
+              circuit.xy(2, 1+2*i).button();
+              circuit.xy(0, 1+2*i).text(n);
+              circuit.xy(2, 1+2*i).line([5]);
+              n = n << 1;
+            }
+
+            circuit.xy(7, 1).readOnlyMemory(30, [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233]);
+
+            n = 1;
+            for (let i = 0; i < 8; i++) {
+              circuit.xy(39, 18+2*i).text(n);
+              n = n << 1;
+            }
+          }
+        });
+      });
+    </script>
+    <p>次の回路では、ROMの入力側にカウンタを接続し、出力側にディスプレイを接続しました。動かすとメモリに保存されている値が順番に表示されていきます。ディスプレイは表示が落ち着くまで少し時間がかかります。</p>
+    <p>このROMには保存されている内容はさきほどと同じです。たまたまフィボナッチ数列の数字が保存されているため、ディスプレイにはフィボナッチ数が順番に表示されます。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          initialScale: 4,
+          initialSpeed: 3,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3", "speed4",
+          ],
+          circuitWriter: (circuit) => {
+              ((circuit) => {
+                  circuit.xy( 0, 0).line([55, 24, 1, 23, -1, -23, 1, 23, -1, -23, 1, 23, -50, 1]);
+                  circuit.xy( 0, 0).reverse();
+                  circuit.xy(10, 0).reverse();
+                  circuit.xy(12, 1).line([0, 6]);
+
+                  circuit.xy(0, 4).text("SET");
+                  circuit.xy(2, 4).button();
+                  circuit.xy(2, 4).line([3, 1, -9, 1]);
+                  let n = 1;
+                  for (let i = 0; i < 4; i++) {
+                    const label = n;
+                    circuit.xy(0, 8+4*i).text(label);
+                    circuit.xy(2, 8+4*i).button();
+                    circuit.xy(2, 8+4*i).line([2]);
+                    n = n << 1;
+                  }
+                  circuit.xy(8, 8).resetableCounter(4);
+
+                  circuit.xy(15,  9).line([3]);
+                  circuit.xy(15, 13).line([0, -2, 3]);
+                  circuit.xy(15, 17).line([1, -4, 2]);
+                  circuit.xy(15, 21).line([2, -6, 1]);
+
+                  circuit.xy(18, 9).readOnlyMemory(30, [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233]);
+              })(circuit.xy(72, 0));
+
+              for (let i = 0; i < 8; i++) {
+                  circuit.xy(120, 26 + 2 * i).line([7 - i, 95 - 3 * i, 63 - i]);
+              }
+
+              circuit.xy(0, 0).sevenSegmentDisplayThreeDigits();
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>

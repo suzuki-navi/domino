@@ -520,5 +520,33 @@ circuitModules.push((Circuit) => {
       }
     }
   }
-});
 
+  Circuit.prototype.readOnlyMemory = function (length, data) {
+      const circuit = this;
+
+      const lineCount = data.length;
+      for (let i = 0; i < 8; i++) {
+          circuit.xy(0, 2 * i).line([2*(lineCount-1)]);
+      }
+      circuit.xy(0, 0).selector1({bitCount:8, start:0, end:lineCount});
+      for (let i = 0; i < lineCount; i++) {
+          circuit.xy(1 + 2 * i, 15).line([0, 15]);
+      }
+      const length2 = 2 * (lineCount-1);
+      if (length2 > length - 2) {
+          throw "length shortage";
+      }
+      for (let i = 0; i < 8; i++) {
+          circuit.xy(2, 17 + 2 * i).line([length-2]);
+      }
+      for (let i = 0; i < lineCount; i++) {
+          let v = data[i];
+          for (let k = 0; k < 8; k++) {
+              if (v % 2 != 0) {
+                  circuit.xy(1+2*i, 16+2*k).line([1, 1]);
+              }
+              v = v >> 1;
+          }
+      }
+  }
+});
