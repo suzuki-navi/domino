@@ -64,6 +64,20 @@ circuitModules.push((Circuit) => {
     cir.line(lengthList.slice(1));
   }
 
+  Circuit.prototype.xor = function () {
+    const circuit = this;
+    circuit.xy(0, 0).line([2, 2]);
+    circuit.xy(1, 0).line([0, 1]);
+    circuit.xy(0, 2).line([0, -1, 3, 1]);
+    circuit.xy(0, 2).line([3]);
+    circuit.xy(1, 1).reverse();
+    circuit.xy(0, 1).reverse(true);
+    circuit.xy(1, 0).reverse(true);
+    circuit.xy(2, 2).reverse(true);
+    circuit.xy(2, 0).reverse();
+    circuit.xy(3, 2).reverse();
+  }
+
   Circuit.prototype.register = function (value=false) {
     const circuit = this;
     circuit.sub({x: +2, y: +0}).line([1, 2, 3, 1, 2, -1]);

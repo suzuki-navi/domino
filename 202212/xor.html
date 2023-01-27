@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>XOR回路 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="XOR回路"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/xor.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/xor_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>XOR回路</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の20本目です。この連載の中では本当は最初のほうで紹介すべき記事なので、あとで記事の順番を変えるつもりです。(2023/01/27)</p>
+    <p>今回は、セルオートマトンで基本的な論理回路であるXOR回路を組み立てます。</p>
+    <p>入力のどちらかのみがOn状態(1)であれば出力がOn(1)になり、両方がOff(0)または両方がOn(1)のときは出力がOff(0)になる回路です。<p>
+    <p>出力 = (入力1 OR 入力2) AND NOT (入力1 AND 入力2)</p>
+    <table>
+      <tr><th>入力1</th><th>入力2</th><th>出力</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td></tr>
+      <tr><td>1</td><td>0</td><td>1</td></tr>
+      <tr><td>1</td><td>1</td><td>0</td></tr>
+    </table>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          worldWidth: 14,
+          worldHeight: 7,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([8, 4]);
+            circuit.xy(7, 1).line([0, 2]);
+            circuit.xy(5, 5).line([0, -2, 6, 2]);
+            circuit.xy(1, 5).line([14]);
+
+            circuit.xy(3, 1).text("Input 1");
+            circuit.xy(3, 5).text("Input 2");
+            circuit.xy(15, 5).text("Output");
+
+            circuit.xy(7, 3).reverse();
+            circuit.xy(6, 3).reverse(true);
+            circuit.xy(7, 2).reverse(true);
+            circuit.xy(7, 3).text("AND");
+            circuit.xy(7, 2).text("↓");
+            circuit.xy(6, 3).text("→");
+
+            circuit.xy(9, 5).text("OR");
+            circuit.xy(9, 4).text("↓");
+            circuit.xy(8, 5).text("→");
+
+            circuit.xy(11, 3).reverse(true);
+            circuit.xy(11, 3).text("NOT");
+            circuit.xy(11, 4).reverse();
+            circuit.xy(10, 5).reverse(true);
+            circuit.xy(11, 5).reverse();
+            circuit.xy(11, 5).text("AND");
+            circuit.xy(11, 4).text("↓");
+            circuit.xy(10, 5).text("→");
+
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 5).button();
+          }
+        });
+      });
+    </script>
+    <p>これをコンパクトにまとめ再利用しやすい形にしたものが次の回路です。</p>
+    <div id="cellular-automaton-02"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-02",
+          worldWidth: 14,
+          worldHeight: 7,
+          initialScale: 2,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2"
+          ],
+          circuitWriter: (circuit) => {
+            circuit.xy(1, 1).line([4, 1, -1]);
+            circuit.xy(1, 5).line([4, -1, 1]);
+            circuit.xy(9, 4).line([4]);
+
+            circuit.xy(6, 2).xor();
+
+            circuit.xy(1, 1).button();
+            circuit.xy(1, 5).button();
+          }
+        });
+      });
+    </script>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</html>

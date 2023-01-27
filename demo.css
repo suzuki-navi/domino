@@ -7,6 +7,9 @@ p {
 p.mathjax {
   font-size: 140%;
 }
+ol {
+  padding-left: 40px;
+}
 table {
   margin-top: 1em;
   margin-bottom: 1em;
