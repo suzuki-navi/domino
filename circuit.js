@@ -36,6 +36,7 @@ circuitModules.push((Circuit) => {
   Circuit.prototype.line = function (length) {
     const circuit = this;
 
+    let lengthList;
     if (typeof(length) == "number") {
       lengthList = [length];
     } else {
@@ -66,7 +67,7 @@ circuitModules.push((Circuit) => {
 
   Circuit.prototype.xor = function () {
     const circuit = this;
-    circuit.xy(0, 0).line([2, 2]);
+    circuit.xy(1, 0).line([1, 2]);
     circuit.xy(1, 0).line([0, 1]);
     circuit.xy(0, 2).line([0, -1, 3, 1]);
     circuit.xy(0, 2).line([3]);
@@ -108,6 +109,13 @@ circuitModules.push((Circuit) => {
     circuit.register(value);
     circuit.xy(0, 2).line([-1, 2]);
     circuit.xy(-1, 0).reverse();
+  }
+
+  Circuit.prototype.registerRS = function (value=false) {
+    const circuit = this;
+    circuit.register(value);
+    circuit.xy(-1, -2).line([2, 1]);
+    circuit.xy(-1, -2).line([0, 1, 1, -1, -1]);
   }
 
   Circuit.prototype.registerChip = function (bitCount, value) {
@@ -555,6 +563,7 @@ circuitModules.push((Circuit) => {
       }
       for (let i = 0; i < lineCount; i++) {
           let v = data[i];
+          circuit.xy(1+2*i, 16).text(v);
           for (let k = 0; k < 8; k++) {
               if (v % 2 != 0) {
                   circuit.xy(1+2*i, 16+2*k).line([1, 1]);
@@ -562,5 +571,71 @@ circuitModules.push((Circuit) => {
               v = v >> 1;
           }
       }
+  }
+
+  Circuit.prototype.waitSignals = function () {
+      const circuit = this;
+
+      circuit.xy(0,  0).line([6]);
+      circuit.xy(0, 10).line([5]);
+      circuit.xy(0,  0).line([0, -2, 26, 6, -1, -4, 1, 4, -1, -4, 1, 5]);
+      circuit.xy(0, 10).line([0, 2, -26, -6, 1, 4, -1, -4, 1, 4, -1, -4, 1, -1]);
+
+      circuit.xy(10, 3).rot(2).registerToggle();
+      circuit.xy(10, 7).flip().registerToggle();
+
+      circuit.xy( 6,  0).line([0, 6]);
+      circuit.xy( 5, 10).line([0, -6]);
+
+      circuit.xy( 2,  1).line([2, -1]);
+      circuit.xy( 2,  9).line([2, 1]);
+      circuit.xy( 3,  1).reverse();
+      circuit.xy( 4,  0).reverse();
+      circuit.xy( 3,  0).reverse(true);
+      circuit.xy( 3,  9).reverse();
+      circuit.xy( 4, 10).reverse();
+      circuit.xy( 3, 10).reverse(true);
+
+      circuit.xy( 7,  2).line([-5, 4]);
+      circuit.xy( 7,  8).line([-5, -4]);
+      circuit.xy( 2, -2).reverse();
+      circuit.xy( 1, -2).reverse(true);
+      circuit.xy( 2,  1).reverse(true);
+      circuit.xy( 2, 12).reverse();
+      circuit.xy( 1, 12).reverse(true);
+      circuit.xy( 2,  9).reverse(true);
+
+      circuit.xy( 3, -2).line([0, 1, 2, -5, -8]);
+      circuit.xy( 3, 12).line([0, -1, -2, 5, 8]);
+
+      circuit.xy(11,  1).line([2, 4, -1]);
+      circuit.xy(11,  9).line([2, -3, 1, -1]);
+      circuit.xy(14,  5).reverse();
+      circuit.xy(14,  6).reverse(true);
+      circuit.xy(13,  5).reverse(true);
+
+      circuit.xy(14,  5).line([5]);
+      circuit.xy(14,  5).line([0, -1, 1, 1]);
+      circuit.xy(15,  5).line([0, 2, -1, -2]);
+      circuit.xy(16,  5).line([0, -1, 1, 1]);
+      circuit.xy(19,  5).line([0, 4, 1, 4]);
+      circuit.xy(19,  9).line([0, 2, 4, 1, 3, -1]);
+      circuit.xy(15, 11).line([-5, 1, 5]);
+      circuit.xy(19, 10).line([5, 1, 5]);
+      circuit.xy(23, 10).line([0, -5, 1, 5]);
+      circuit.xy(18,  5).reverse();
+      circuit.xy(17,  5).reverse(true);
+
+      circuit.xy(18,  5).line([0, -3, 2, -1, -3, -1, 5, -3, 4]);
+      circuit.xy( 9,  5).line([0, -1]);
+      circuit.xy( 8,  5).line([0, 1]);
+
+      circuit.xy(18,  4).line([4]);
+      circuit.xy(20,  4).line([0, 5, -1, -5]);
+
+      circuit.xy(22,  4).line([2, -1, -13]);
+      circuit.xy(22,  4).line([0, 4, 8, 1, -3]);
+
+      circuit.xy(20,  2).line([5, 3, -6]);
   }
 });

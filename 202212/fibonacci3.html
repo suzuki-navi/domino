@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>フィボナッチ数列 その3 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="フィボナッチ数列 その3"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/fibonacci3.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/fibonacci3_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>フィボナッチ数列 その3</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の21本目です。(2023/01/30)</p>
+
+    <p>今回は<a href="fibonacci2.html">前回のフィボナッチ数列</a>に改良を加えていきます。</p>
+    <h2>ver.9</h2>
+    <p>ver.9は<a href="rom.html">ROM</a>を追加します。</p>
+    <p>前回までのフィボナッチ数列の回路では、処理する内容は制御回路に直接書かれていました。これをROMに移譲し、命令はバイトコードで表現するようにします。これまでの制御回路ではカウンタの値から処理内容を判定していましたが、制御回路ではバイトコードをデコードするようにします。</p>
+    <p>プログラムカウンタは命令のアドレスを表し、ROMにアドレスとして渡すようにしています。</p>
+    <p><img src="fibonacci3-09-1.png"></p>
+    <p>バイトコードと処理内容の対応は次のようにしています。CPUでいう命令セットというものになります。</p>
+    <table>
+      <tr><th>コード</th><th>処理内容</th></tr>
+      <tr><td>1</td><td>レジスタAにシグナルを流す</td></tr>
+      <tr><td>2</td><td>レジスタBにシグナルを流す</td></tr>
+      <tr><td>3</td><td>レジスタCにシグナルを流す</td></tr>
+      <tr><td>4</td><td>出力制御0にシグナルを流す</td></tr>
+      <tr><td>5</td><td>出力制御1にシグナルを流す</td></tr>
+      <tr><td>6</td><td>出力制御2にシグナルを流す</td></tr>
+      <tr><td>252 nnn</td><td>フラグレジスタが0の場合はジャンプ(ジャンプ先は次のコードの値)</td></tr>
+      <tr><td>253 nnn</td><td>フラグレジスタが1の場合はジャンプ(ジャンプ先は次のコードの値)</td></tr>
+      <tr><td>254</td><td>繰り上がりフラグをフラグレジスタにロード</td></tr>
+      <tr><td>255 nnn</td><td>無条件にジャンプ(ジャンプ先は次のコードの値)</td></tr>
+    </table>
+    <p>フィボナッチ数列を計算するコードは次の通りになります。ver.8の処理内容と同じです。</p>
+    <table>
+      <tr><th>アドレス</th><th>コード</th><th>処理内容</th></tr>
+      <tr><td>0</td><td>255 12</td><td>12にジャンプ</td></tr>
+      <tr><td>2</td><td>4 5</td><td>出力制御0と1にシグナルを流す</td></tr>
+      <tr><td>4</td><td>1 2 3</td><td>レジスタAとBとCにシグナルを流す</td></tr>
+      <tr><td>7</td><td>4, 6</td><td>出力制御0と2にシグナルを流す</td></tr>
+      <tr><td>9</td><td>254</td><td>繰り上がりフラグをフラグレジスタにロード</td></tr>
+      <tr><td>10</td><td>253 2</td><td>フラグレジスタが立っていれば2にジャンプ</td></tr>
+      <tr><td>12</td><td>3 1</td><td>レジスタAとCにシグナルを流す</td></tr>
+      <tr><td>14</td><td>254</td><td>繰り上がりフラグをフラグレジスタにロード</td></tr>
+      <tr><td>15</td><td>253 2</td><td>フラグレジスタが立っていれば2にジャンプ</td></tr>
+      <tr><td>17</td><td>3 2</td><td>レジスタBとCにシグナルを流す</td></tr>
+      <tr><td>19</td><td>255 9</td><td>9にジャンプ</td></tr>
+    </table>
+    <p>汎用的な処理ができるように書き換えてきた結果、回路が大きくなってきて、処理速度が遅くなってきました。このセルオートマトンの世界では単純に回路面積が広いほど処理速度が遅くなります。</p>
+    <p>オーバーフロー時の処理が早く見られるように233から始まるようにしています。</p>
+    <p><a href="fibonacci3-09.html">回路</a></p>
+    <h2>ver.10</h2>
+    <p>次のバージョンでは定数を命令の中に埋め込めるようにします。</p>
+    <p>これまでのバージョンでは、オーバーフロー時に1にリセットするときには、「1にリセット」専用回路を用意していました。これを任意の数にリセットできるようにします。数は命令の中に埋め込みます。</p>
+    <p><img src="fibonacci3-10-1.png"></p>
+    <p>命令セットには次を追加しました。</p>
+    <table>
+      <tr><th>コード</th><th>処理内容</th></tr>
+      <tr><td>248 nnn</td><td>固定値レジスタに特定の値をセット(値は次のコードの値)</td></tr>
+    </table>
+    <p>フィボナッチ数列を計算するコードは次の通りになります。ver.9に比べ1という値をセットする処理が増えています。</p>
+    <table>
+      <tr><th>アドレス</th><th>コード</th><th>処理内容</th></tr>
+      <tr><td>0</td><td>255 14</td><td>14にジャンプ</td></tr>
+      <tr><td>2</td><td>248 1</td><td>固定レジスタに1をセット</td></tr>
+      <tr><td>4</td><td>4 5</td><td>出力制御0と1にシグナルを流す</td></tr>
+      <tr><td>6</td><td>1 2 3</td><td>レジスタAとBとCにシグナルを流す</td></tr>
+      <tr><td>9</td><td>4, 6</td><td>出力制御0と2にシグナルを流す</td></tr>
+      <tr><td>11</td><td>254</td><td>繰り上がりフラグをフラグレジスタにロード</td></tr>
+      <tr><td>12</td><td>253 4</td><td>フラグレジスタが立っていれば4にジャンプ</td></tr>
+      <tr><td>14</td><td>3 1</td><td>レジスタAとCにシグナルを流す</td></tr>
+      <tr><td>16</td><td>254</td><td>繰り上がりフラグをフラグレジスタにロード</td></tr>
+      <tr><td>17</td><td>253 4</td><td>フラグレジスタが立っていれば4にジャンプ</td></tr>
+      <tr><td>19</td><td>3 2</td><td>レジスタBとCにシグナルを流す</td></tr>
+      <tr><td>21</td><td>255 11</td><td>11にジャンプ</td></tr>
+    </table>
+    <p><a href="fibonacci3-10.html">回路</a></p>
+    <p>制御回路の中央あたりがごちゃごちゃしてしまい、わけがわからなくなってきました。</p>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</body>
+</html>
