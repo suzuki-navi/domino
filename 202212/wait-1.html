@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>待ち合わせ回路 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="待ち合わせ回路"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/wait-1.html"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <div id="cellular-automaton-00" class="full-screen"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-00",
+          initialScale: 4,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+            "zoom",
+          ],
+          circuitWriter: (circuit) => {
+
+              for (let i = 0; i <= 30; i+=2) {
+                  let y = -16 + 16 * i;
+                  if (i == 0) y += 16;
+                  ((circuit) => {
+                      circuit.xy(0, 3).text("delta: " + i);
+                      circuit.xy(0, 5).tactileButton10();
+                      if (i >= 20) {
+                          circuit.xy(3, 5).line([5, -5, 2, 9, -1, -9, 1, (i/2-9), -1, -(i/2-9), 7]);
+                      } else if (i > 0) {
+                          circuit.xy(3, 5).line([5, -5, 2, (i/2), -1, -(i/2), 9]);
+                      } else {
+                          circuit.xy(3, 5).line([5, -5, 12]);
+                      }
+                      circuit.xy(8, 5).line([1, 5, -11]);
+                      circuit.xy(20, 0).waitSignals();
+                      circuit.xy(51, 5).line([30]);
+                  })(circuit.xy(0, y));
+                  if (i == 0) continue;
+                  y += 16;
+                  ((circuit) => {
+                      circuit.xy(0, 3).text("delta: " + i);
+                      circuit.xy(0, 5).tactileButton10();
+                      circuit.xy(3, 5).line([5, -5, 12]);
+                      if (i >= 20) {
+                          circuit.xy(8, 5).line([1, 5, -1, -9, 1, 9, -1, -(i/2-9), 1, (i/2-9), -7]);
+                      } else if (i > 0) {
+                          circuit.xy(8, 5).line([1, 5, -1, -(i/2), 1, (i/2), -9]);
+                      } else {
+                          circuit.xy(8, 5).line([1, 5, -11]);
+                      }
+                      circuit.xy(20, 0).waitSignals();
+                      circuit.xy(51, 5).line([30]);
+                  })(circuit.xy(0, y));
+              }
+
+          }
+        });
+      });
+    </script>
+  </section>
+</body>
+</body>
+</html>

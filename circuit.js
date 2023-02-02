@@ -79,6 +79,18 @@ circuitModules.push((Circuit) => {
     circuit.xy(3, 2).reverse();
   }
 
+  Circuit.prototype.tactileButton10 = function () {
+    const circuit = this;
+    circuit.sub({x: 0, y: 0}).button();
+    circuit.sub({x: 0, y: 0}).line([3]);
+    circuit.sub({x: 1, y: 0}).line([0, 1, 1, 1]);
+    circuit.sub({x: 1, y: 1}).line([0, 1, 1, 1]);
+    circuit.sub({x: 0, y: 1}).reverse();
+    circuit.sub({x: 1, y: 1}).reverse(true);
+    circuit.sub({x: 1, y: 2}).reverse();
+    circuit.sub({x: 2, y: 0}).line([0, 2, -1, -2]);
+  }
+
   Circuit.prototype.register = function (value=false) {
     const circuit = this;
     circuit.sub({x: +2, y: +0}).line([1, 2, 3, 1, 2, -1]);

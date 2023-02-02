@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+<meta charset="utf-8"/>
+<title>待ち合わせ回路 | セルオートマトンによるCPU作成</title>
+<meta property="og:title" content="待ち合わせ回路"/>
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://suzuki-navi.github.io/domino/202212/wait.html"/>
+<meta property="og:image" content="https://suzuki-navi.github.io/domino/202212/wait_og.png"/>
+<meta property="og:description" content=""/>
+<meta property="og:site_name" content="suzuki-naviのセルオートマトンによるCPU作成"/>
+<script src="../domino.js"></script>
+<script src="../circuit.js"></script>
+<link rel="stylesheet" href="../domino.css"></link>
+<link rel="stylesheet" href="../demo.css"></link>
+</head>
+<body>
+  <section>
+    <h1>待ち合わせ回路</h1>
+    <p>この記事は<a href="./">セルオートマトンによるCPU作成</a>連載記事の22本目です。(2023/02/02)</p>
+    <p>2つのシグナルが合流して待ち合わせる回路です。2つのシグナルがそろってから初めて出力側にシグナルが排出されます。<a href="fibonacci3.html">フィボナッチ数列の回路</a>を発展させてCPUにしていくにあたって、この回路が必要となりそうだったので作成しました。</p>
+    <p>シグナルを一度分流させてそれぞれの仕事をしたあとに、合流地点で2つそろうのを待ってから後続にシグナルを流すときにこの回路を使います。</p>
+    <p>このセルオートマトンの世界でのCPUでは、シグナルを一度分流させたあとに合流するときには、それぞれの途中経路に応じてタイミングがずれることになりますが、タイミングの差はセルの数またはステップ数で数えて必ず偶数になりますので、偶数の場合にだけうまく動作するようにテストしています。</p>
+    <p>下のサンプル回路で試すことができます。2つのボタンを押すとそれぞれからシグナルが流れます。片方だけ押すと他方が押されるまで右にシグナルが流れません。片方だけ連続してシグナルを流した時のことは想定していないので意図しない動きになります。</p>
+    <div id="cellular-automaton-01"></div>
+    <script>
+      window.addEventListener("load", (event) => {
+        cellularAutomatonUI2({
+          cellularAutomatonId: "cellular-automaton-01",
+          initialScale: 3,
+          initialSpeed: 2,
+          uiControls: [
+            "reset", "stop", "step",
+            "speed1", "speed2", "speed3",
+            "zoom",
+          ],
+          circuitWriter: (circuit) => {
+                  circuit.xy(0, 0).tactileButton10();
+                  circuit.xy(0, 10).tactileButton10();
+                  circuit.xy(3, 0).line([10]);
+                  circuit.xy(3, 10).line([10]);
+                  circuit.xy(13, 0).waitSignals();
+                  circuit.xy(44, 5).line([20]);
+          }
+        });
+      });
+    </script>
+    <p>いろいろなタイミングでシグナルを流した場合の動作テストは以下のリンクから試すことができます。</p>
+    <p><a href="wait-1.html">待ち合わせ回路のテスト</a></p>
+    <p>半導体によるCPUでこれに該当する回路はないかもしれません。</p>
+  </section>
+  <section>
+    <p><a href="./">連載目次に戻る</a></p>
+  </section>
+</body>
+</body>
+</html>
